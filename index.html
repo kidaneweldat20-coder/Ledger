@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ti">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Group Ledger</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --text: #333; --card: #fff; --border: #ccc; }
+        .dark-mode { --bg: #1a1a1a; --text: #e0e0e0; --card: #2c3e50; --border: #444; }
+        body { font-family: sans-serif; margin: 0; background-color: var(--bg); color: var(--text); }
+        
+        .sidebar { position: fixed; left: -250px; top: 0; width: 250px; height: 100%; background: #2c3e50; color: white; transition: 0.3s; z-index: 2000; padding-top: 20px; }
+        .sidebar.active { left: 0; }
+        .nav-item { padding: 15px; cursor: pointer; border-bottom: 1px solid #3e5871; }
+        .nav-item:hover { background: #3498db; }
+        
+        .main { padding: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .card { background: var(--card); padding: 15px; border-radius: 8px; text-align: center; border-bottom: 3px solid #3498db; }
+        
+        .input-form { background: var(--card); padding: 20px; border-radius: 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); }
+        
+        .table-wrapper { margin-top: 20px; overflow-x: auto; background: var(--card); border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: center; }
+        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div style="padding:20px; font-weight:bold; font-size:1.2rem;">Menu</div>
+    <div id="groupList">
+        <div class="nav-item" onclick="filterGroup('All')">ጠቕላላ (All)</div>
+    </div>
+</div>
+
+<div class="main">
+    <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px;">
+        <div onclick="document.getElementById('sidebar').classList.add('active')" style="cursor:pointer; font-size:24px;">☰</div>
+        <h2 id="viewTitle" style="margin:0;">ጠቕላላ መዝገብ</h2>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card"><h3>ኣታዊ</h3><p id="totalIn">0.00</p></div>
+        <div class="card"><h3>ወፃኢ</h3><p id="totalOut">0.00</p></div>
+        <div class="card"><h3>ቀራዪ</h3><p id="netBalance">0.00</p></div>
+    </div>
+
+    <div class="input-form">
+        <input type="number" id="year" placeholder="ዓመት">
+        <select id="month"></select>
+        <select id="day"></select>
+        <select id="groupSelect"></select>
+        <input type="text" id="desc" placeholder="መግለፂ" style="grid-column: span 2;">
+        <input type="number" id="amount" placeholder="መጠን">
+        <button id="typeBtn" class="btn" style="background:green" onclick="toggleType()">ኣታዊ</button>
+        <button class="btn" style="background:#3498db" onclick="saveEntry()">መዝግብ</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>ዕለት</th><th>ጉጅለ</th><th>መግለፂ</th><th>ኣታዊ</th><th>ወፃኢ</th><th>ተግባር</th></tr></thead>
+            <tbody id="ledgerBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let data = JSON.parse(localStorage.getItem('ledger')) || [];
+    let entryType = 'in', activeFilter = 'All';
+
+    const months = ["መስከረም","ጥቅምቲ","ሕዳር","ታሕሳስ","ጥሪ","ለካቲት","መጋቢት","ሚያዝያ","ግንቦት","ሰነ","ሓምለ","ነሓሰ","ጳጉሜን"];
+    months.forEach((m,i) => document.getElementById('month').innerHTML += `<option value="${i+1}">${m}</option>`);
+    for(let d=1; d<=31; d++) document.getElementById('day').innerHTML += `<option value="${d}">${d}</option>`);
+    
+    document.getElementById('year').value = new Date().getFullYear();
+    ['ስራሕ መካየዲ', 'ሬጅመንት 20', 'ሬጅመንት 21', 'ሬጅመንት 22', 'ሬጅመንት 23', 'ሬጅመንት 24','ክ/ሰራዊት ስታፍ','ኮማንድ'].forEach(g => {
+        document.getElementById('groupList').innerHTML += `<div class="nav-item" onclick="filterGroup('${g}')">${g}</div>`;
+        document.getElementById('groupSelect').innerHTML += `<option value="${g}">${g}</option>`;
+    });
+
+    function saveEntry() {
+        const amountVal = document.getElementById('amount').value;
+        // Validation: Prevents saving empty fields
+        if (!amountVal || parseFloat(amountVal) <= 0) {
+            alert("በጃኹም ቅኑዕ መጠን ኣእትዉ");
+            return;
+        }
+        const entry = {
+            id: Date.now(),
+            group: document.getElementById('groupSelect').value,
+            date: `${document.getElementById('year').value}-${document.getElementById('month').value}-${document.getElementById('day').value}`,
+            desc: document.getElementById('desc').value || "ዘይተገልጸ",
+            amount: parseFloat(amountVal),
+            type: entryType
+        };
+        data.push(entry);
+        localStorage.setItem('ledger', JSON.stringify(data));
+        document.getElementById('amount').value = '';
+        render();
+    }
+
+    function render() {
+        const tbody = document.getElementById('ledgerBody');
+        tbody.innerHTML = '';
+        let filtered = activeFilter === 'All' ? data : data.filter(i => i.group === activeFilter);
+        let inTotal = 0, outTotal = 0;
+        filtered.forEach(item => {
+            if(item.type === 'in') inTotal += item.amount; else outTotal += item.amount;
+            tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.group}</td><td>${item.desc}</td>
+            <td>${item.type=='in'?item.amount:''}</td><td>${item.type=='out'?item.amount:''}</td>
+            <td><button onclick="del(${item.id})">🗑️</button></td></tr>`;
+        });
+        document.getElementById('totalIn').innerText = inTotal.toFixed(2);
+        document.getElementById('totalOut').innerText = outTotal.toFixed(2);
+        document.getElementById('netBalance').innerText = (inTotal - outTotal).toFixed(2);
+    }
+
+    function del(id) { data = data.filter(i => i.id !== id); localStorage.setItem('ledger', JSON.stringify(data)); render(); }
+    function filterGroup(g) { activeFilter = g; document.getElementById('viewTitle').innerText = g; document.getElementById('sidebar').classList.remove('active'); render(); }
+    function toggleType() { entryType = entryType === 'in' ? 'out' : 'in'; document.getElementById('typeBtn').innerText = entryType === 'in' ? 'ኣታዊ' : 'ወፃኢ'; document.getElementById('typeBtn').style.background = entryType === 'in' ? 'green' : 'red'; }
+    
+    document.onclick = (e) => { if(e.target.id !== 'sidebar' && !e.target.closest('#sidebar') && e.target.tagName !== 'DIV' && e.target.innerText !== '☰') document.getElementById('sidebar').classList.remove('active'); };
+    render();
+</script>
+</body>
+</html>
