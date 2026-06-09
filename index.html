@@ -3,72 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Group Ledger</title>
+    <title>Professional Group Ledger (Cloud Synchronized)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { 
-            --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; 
-            --text: #333; --card: #ffffff; --border: #e1e8ed; 
-            --shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --primary: #2c3e50; 
+            --accent: #3498db; 
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --bg: #f8fafc; 
+            --text: #1e293b; 
+            --card: #ffffff; 
+            --border: #e2e8f0; 
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.07);
         }
-        body.dark-mode { --primary: #1a252f; --accent: #3498db; --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); transition: background 0.3s; display: flex; }
+        body.dark-mode { 
+            --primary: #0f172a; 
+            --accent: #38bdf8; 
+            --bg: #020617; 
+            --text: #f1f5f9; 
+            --card: #1e293b; 
+            --border: #334155; 
+        }
+        body { 
+            font-family: 'Segoe UI', -apple-system, sans-serif; 
+            margin: 0; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            transition: background 0.3s, color 0.3s; 
+            display: flex; 
+        }
 
-        .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100%; background: var(--primary); color: white; z-index: 2000; box-shadow: 2px 0 10px rgba(0,0,0,0.1); transition: 0.3s; }
-        .nav-item { padding: 18px 20px; cursor: pointer; transition: all 0.3s; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.1); padding-left: 30px; }
-        .nav-item.active-nav { background: var(--accent); border-left: 5px solid #fff; }
+        /* Sidebar Styling */
+        .sidebar { 
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            width: 260px; 
+            height: 30%; 
+            background: var(--primary); 
+            color: white; 
+            z-index: 2000; 
+            box-shadow: 4px 0 20px rgba(0,0,0,0.08); 
+            transition: transform 0.3s ease; 
+            border-radius: 20px;
+            margin-left: 1px;
+        }
+        .sidebar-header {
+            padding: 24px 20px; 
+            font-weight: 700; 
+            font-size: 1.25rem; 
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            letter-spacing: 0.5px;
+        }
+        .nav-item { 
+            padding: 16px 20px; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            border-bottom: 1px solid rgba(255,255,255,0.02); 
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+        .nav-item:hover { 
+            background: rgba(255, 255, 255, 0.08); 
+            padding-left: 28px; 
+            opacity: 1;
+        }
+        .nav-item.active-nav { 
+            background: var(--accent); 
+            border-left: 5px solid #fff; 
+            font-weight: 600;
+            opacity: 1;
+        }
 
-        .main { margin-left: 250px; width: calc(100% - 250px); padding: 25px; transition: 0.3s; }
-        .burger-menu { display: none; cursor: pointer; font-size: 24px; margin-right: 15px; }
+        /* Main Workspace Container */
+        .main { 
+            margin-left: 260px; 
+            width: calc(100% - 260px); 
+            padding: 40px; 
+            transition: all 0.3s ease; 
+            box-sizing: border-box;
+        }
+        .burger-menu { 
+            display: none; 
+            cursor: pointer; 
+            font-size: 26px; 
+            background: var(--card);
+            padding: 8px 14px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
 
-        /* Custom Modal */
-        #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center; color: var(--text); }
-        .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        /* Header controls */
+        .top-bar {
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 35px; 
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .action-btns {
+            margin-left: auto; 
+            display: grid; 
+            grid-template-columns: repeat(6, minmax(65px, auto));
+            gap: 10px;
+            align-items: center;
+        }
 
-        @media (max-width: 768px) {
-            .sidebar { left: -250px; }
-            .sidebar.active { left: 0; }
-            .main { margin-left: 0; width: 100%; padding: 10px; }
+        /* Loading Indicator Spinner overlay */
+        #loadingSpinner {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 700;
+            box-shadow: var(--shadow);
+            z-index: 4000;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* Modal Box Customization */
+        #customModal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.4); 
+            backdrop-filter: blur(4px);
+            z-index: 3000; 
+            align-items: center; 
+            justify-content: center; 
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-content { 
+            background: var(--card); 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+            width: 90%; 
+            max-width: 420px; 
+            text-align: center; 
+            color: var(--text); 
+            transform: scale(0.95);
+            animation: slideUp 0.2s forwards ease;
+        }
+        .modal-btns { display: flex; gap: 12px; justify-content: center; margin-top: 25px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { to { transform: scale(1); } }
+
+        /* Statistics Cards Layout */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 25px; }
+        .card { 
+            background: var(--card); 
+            padding: 24px; 
+            border-radius: 16px; 
+            text-align: center; 
+            box-shadow: var(--shadow); 
+            border-top: 5px solid var(--accent); 
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-3px); }
+        .card h3 { margin: 0 0 10px 0; font-size: 0.95rem; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+        .card p { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text); }
+        #totalIn { color: var(--success); }
+        #totalOut { color: var(--danger); }
+
+        /* Quick Filters Segment UI */
+        .time-filter-strip {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .filter-chip {
+            padding: 10px 18px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text);
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+        }
+        .filter-chip:hover {
+            border-color: var(--accent);
+        }
+        .filter-chip.active-chip {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Dynamic Inputs & Filtering Form */
+        .input-form { 
+            background: var(--card); 
+            padding: 25px; 
+            border-radius: 16px; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 16px; 
+            box-shadow: var(--shadow); 
+            margin-bottom: 25px;
+        }
+        .search-wrapper {
+            background: var(--card);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+        }
+        .search-wrapper input { width: 100%; border: none; outline: none; background: transparent; font-size: 1rem; color: var(--text); }
+
+        input, select { 
+            padding: 14px; 
+            border: 1px solid var(--border); 
+            border-radius: 10px; 
+            background: var(--bg); 
+            color: var(--text); 
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+
+        /* Table Design Framework */
+        .table-wrapper { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: rgba(0,0,0,0.02); padding: 18px; color: #64748b; text-transform: uppercase; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); text-align: center;}
+        td { padding: 18px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.95rem; }
+        tr:hover td { background: rgba(0,0,0,0.01); }
+
+        /* Badges & Universal Buttons CSS */
+        .badge { padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; }
+        .badge-in { background: rgba(46, 204, 113, 0.15); color: #27ae60; }
+        .badge-out { background: rgba(231, 76, 60, 0.15); color: #c0392b; }
+
+        .btn { padding: 12px 16px; cursor: pointer; border: none; border-radius: 10px; color: white; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; text-align: center; }
+        .btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        .action-row-btn { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 6px; border-radius: 6px; transition: background 0.2s; }
+        .action-row-btn:hover { background: var(--bg); }
+
+        /* Responsive Breakpoints Rules */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-260px); 
+              height: 100%;
+            }
+            .sidebar.active { transform: translateX(0); }
+            .main { margin-left: 0; width: 100%; padding: 20px; }
             .burger-menu { display: block !important; }
-            .stats-grid { grid-template-columns: 1fr !important; }
-            .input-form { grid-template-columns: 1fr !important; }
-            .table-wrapper { width: 100%; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
-            table { width: 100%; min-width: 600px; }
         }
-
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--card); padding: 20px; border-radius: 16px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-top: 5px solid var(--accent); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease; }
-        .card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 20px 30px rgba(0,0,0,0.15); }
-        .card p { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--accent); }
-
-        .input-form { background: var(--card); padding: 20px; border-radius: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; box-shadow: var(--shadow); }
-        input, select { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
-        .table-wrapper { margin-top: 30px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f8fafc; padding: 15px; color: #64748b; text-transform: uppercase; font-size: 0.85rem; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; }
-        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 8px; color: white; font-weight: 600; transition: 0.2s; }
-        .btn:hover { filter: brightness(1.1); }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; gap: 15px; }
+            .table-wrapper { width: 100%; display: block; overflow-x: auto; }
+            table { min-width: 750px; }
+            .top-bar { display: grid; grid-template-columns: auto 1fr; width: 100%; align-items: center; }
+            .top-bar h2 { grid-column: 2; font-size: 1.5rem; }
+            .action-btns { grid-column: 1 / span 2; margin-left: 0; width: 100%; grid-template-columns: repeat(3, 1fr); }
+            .action-btns .btn:first-child { grid-column: span 1; }
+        }
+        @media (max-width: 480px) {
+            .action-btns { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
 
+<div id="loadingSpinner">⏳ ምስ መረዳእታ ዓንቀጽ ይራኸብ ኣሎ...</div>
+
 <div class="sidebar" id="sidebar">
-    <div style="padding:20px; font-weight:bold; font-size:1.2rem;">Menu</div>
-    <div id="groupList"></div>
+    <div class="sidebar-header"> ዝርዝር</div>
 </div>
 
 <div class="main">
-    <div style="display:flex; align-items:center; margin-bottom:20px; flex-wrap: wrap;">
-        <div class="burger-menu" onclick="document.getElementById('sidebar').classList.add('active')">☰</div>
-        <h2 id="viewTitle" style="margin:0;">ጠቕላላ መዝገብ</h2>
-        <div style="margin-left:auto; display:flex; gap:10px;">
-            <button class="btn" style="background:#555" onclick="toggleDarkMode()">🌓</button>
-            <button class="btn" style="background:#27ae60" onclick="exportExcel()">📊 Excel</button>
-            <button class="btn" style="background:#c0392b" onclick="clearAll()">🗑️ Reset</button>
+    <div class="top-bar">
+        <div class="burger-menu" onclick="event.stopPropagation(); document.getElementById('sidebar').classList.add('active')">☰</div>
+        <h2 id="viewTitle" style="margin:0; font-weight: 800;">ጠቕላላ መዝገብ</h2>
+        <div class="action-btns">
+            <button class="btn" style="background:#475569" onclick="toggleDarkMode()">🌓</button>
+            <button class="btn" style="background:#0284c7" onclick="fetchCloudData()">🔄 Sync</button>
+            <button class="btn" style="background:#16a34a" onclick="exportExcel()">📊 Excel</button>
+            <button class="btn" style="background:#0284c7" onclick="window.print()">🖨️ Print</button>
+            <button class="btn" style="background:#dc2626" onclick="clearAll()">🗑️ Reset</button>
         </div>
+    </div>
+
+    <div class="search-wrapper">
+        <input type="text" id="tableSearch" placeholder="🔍 ኣብዚ ይድለ (ብሬጅመንት ዓይነት ወይ ዕለት...)" oninput="render()">
     </div>
 
     <div class="stats-grid">
@@ -77,27 +315,43 @@
         <div class="card"><h3>ቀራዪ</h3><p id="netBalance">0.00</p></div>
     </div>
 
+    <div class="time-filter-strip">
+        <div class="filter-chip active-chip" onclick="filterByDateRange('all', this)">ኩሉ (All)</div>
+        <div class="filter-chip" onclick="filterByDateRange('today', this)">ሎሚ (Today)</div>
+        <div class="filter-chip" onclick="filterByDateRange('month', this)">እዚ ወርሒ (This Month)</div>
+        <div class="filter-chip" onclick="filterByDateRange('year', this)">እዚ ዓመት (This Year)</div>
+    </div>
+
     <div class="input-form">
         <input type="number" id="year" placeholder="ዓመት">
         <select id="month"></select>
         <select id="day"></select>
         <select id="groupSelect"></select>
-        <input type="text" id="desc" placeholder="መግለፂ" style="grid-column: span 2;">
+        <select id="categorySelect">
+            <option value="ካብ ኮር 311 ኣታዊ ዝኾነ">ካብ ኮር 311 ኣታዊ ዝኾነ</option>
+            <option value="ወፃኢ (ካብ ብሓደራ)">ካብ ብሓደራ ተቐማጢ ቀለብ ወፃኢ ዝኾነ</option>
+            <option value="ኣታዊ (ስራሕ መካየዲ)">ካብ ኮር 311 ኣታዊ ዝኾነ ስራሕ መካየዲ</option>
+            <option value="ወፃኢ (ስራሕ መካየዲ)">ካብ ናይ ስራሕ መካየዲ ወፃኢ ዝኾነ</option>
+            <option value="ዝውውር">ዝውውር ዝተገበረ</option>
+            <option value="ኻልእ">ኻልእ</option>
+        </select>
         <input type="number" id="amount" placeholder="መጠን">
-        <button id="typeBtn" class="btn" style="background:green" onclick="toggleType()">ኣታዊ</button>
+        <button id="typeBtn" class="btn" style="background:#16a34a" onclick="toggleType()">ኣታዊ</button>
         <button id="addBtn" class="btn" style="background:#3498db" onclick="saveEntry()">መዝግብ</button>
-    </div>
-
-    <div style="margin-top:20px; display: flex; gap: 10px; flex-wrap: wrap;">
-        <input type="text" id="searchInput" placeholder="ምድላይ (Search description)..." oninput="render()" style="flex:2; min-width: 200px;">
-        <input type="date" id="startDate" onchange="render()" style="flex:1">
-        <input type="date" id="endDate" onchange="render()" style="flex:1">
-        <button class="btn" style="background:#7f8c8d" onclick="clearDateFilter()">ጽረግ</button>
     </div>
 
     <div class="table-wrapper">
         <table>
-            <thead><tr><th>ዕለት</th><th>ጉጅለ</th><th>መግለፂ</th><th>ኣታዊ</th><th>ወፃኢ</th><th>ተግባር</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>ዕለት</th>
+                    <th>ጉጅለ</th>
+                    <th>ዓይነት/ምኽንያት</th>
+                    <th>ኣታዊ</th>
+                    <th>ወፃኢ</th>
+                    <th class="action-header">ተግባር</th>
+                </tr>
+            </thead>
             <tbody id="ledgerBody"></tbody>
         </table>
     </div>
@@ -105,44 +359,142 @@
 
 <div id="customModal">
     <div class="modal-content">
-        <p id="modalMsg"></p>
+        <p id="modalMsg" style="font-weight: 600; font-size: 1.1rem; margin: 0;"></p>
         <div class="modal-btns" id="modalBtns"></div>
     </div>
 </div>
 
 <script>
-    let data = JSON.parse(localStorage.getItem('ledger')) || [];
-    let entryType = 'in', activeFilter = 'ጠቕላላ መዝገብ', editId = null;
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5D78EQm4XMafyVuUSLKgE_KpvAnykL91EtGOvIaQLe6Rqr5li_bZ4g_q5cWREXYCNUA/exec";
+
+    let data = [];
+    let entryType = 'in';
+    let activeFilter = 'ጠቕላላ መዝገብ';
+    let timeScopeFilter = 'all'; 
+    let editId = null;
     const groups = ['ስራሕ መካየዲ', 'ሬጅመንት 20', 'ሬጅመንት 21', 'ሬጅመንት 22', 'ሬጅመንት 23', 'ሬጅመንት 24','ክ/ሰራዊት ስታፍ','ኮማንድ'];
 
-    // Setup Date Dropdowns
-    const now = new Date();
-    document.getElementById('year').value = now.getFullYear();
-    const months = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-    months.forEach(m => document.getElementById('month').innerHTML += `<option value="${m}">${m}</option>`);
-    for(let d=1; d<=31; d++) document.getElementById('day').innerHTML += `<option value="${d.toString().padStart(2,'0')}">${d.toString().padStart(2,'0')}</option>`;
-    document.getElementById('month').value = (now.getMonth() + 1).toString().padStart(2, '0');
-    document.getElementById('day').value = now.getDate().toString().padStart(2, '0');
-    
-    // Setup Sidebar
-    const gList = document.getElementById('groupList');
-    gList.innerHTML = `<div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>`;
-    groups.forEach(g => {
-        gList.innerHTML += `<div class="nav-item" onclick="filterGroup('${g}', this)">${g}</div>`;
-        document.getElementById('groupSelect').innerHTML += `<option value="${g}">${g}</option>`;
-    });
+    function showSpinner(show) {
+        document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+    }
+
+    function getEthiopianDate(gregorianDate) {
+        const gregYear = gregorianDate.getFullYear();
+        const gregMonth = gregorianDate.getMonth() + 1;
+        const gregDay = gregorianDate.getDate();
+
+        let totalDays = 0;
+        for (let y = 1; y < gregYear; y++) {
+            totalDays += ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
+        }
+        const gregMonthDays = [0, 31, ((gregYear % 4 === 0 && gregYear % 100 !== 0) || gregYear % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        for (let m = 1; m < gregMonth; m++) {
+            totalDays += gregMonthDays[m];
+        }
+        totalDays += gregDay;
+
+        let ethDays = totalDays - 2796; 
+        let ethYear = Math.floor(ethDays / 1461) * 4;
+        ethDays %= 1461;
+        
+        while (ethDays > 365) {
+            if (ethYear % 4 === 3 && ethDays === 366) break;
+            ethDays -= (ethYear % 4 === 3) ? 366 : 365;
+            ethYear++;
+        }
+        ethYear++;
+
+        let ethMonth = Math.floor((ethDays - 1) / 30) + 1;
+        let ethDay = ((ethDays - 1) % 30) + 1;
+
+        return {
+            year: ethYear,
+            month: ethMonth.toString().padStart(2, '0'),
+            day: ethDay.toString().padStart(2, '0')
+        };
+    }
+
+    function adjustDays() {
+        const yearInput = parseInt(document.getElementById('year').value) || 2018;
+        const monthSelect = document.getElementById('month').value;
+        const daySelect = document.getElementById('day');
+        const currentSelectedDay = daySelect.value;
+        
+        let maxDays = 30; 
+        if (monthSelect === "13") {
+            maxDays = ((yearInput + 1) % 4 === 0) ? 6 : 5;
+        }
+
+        daySelect.innerHTML = '';
+        for (let d = 1; d <= maxDays; d++) {
+            const dayStr = d.toString().padStart(2, '0');
+            daySelect.innerHTML += `<option value="${dayStr}">${dayStr}</option>`;
+        }
+        if (parseInt(currentSelectedDay) <= maxDays) {
+            daySelect.value = currentSelectedDay;
+        }
+    }
+
+    async function fetchCloudData() {
+        if (GOOGLE_SCRIPT_URL.includes("YOUR_PASTED_WEB_APP_URL")) return;
+        showSpinner(true);
+        try {
+            let response = await fetch(GOOGLE_SCRIPT_URL);
+            data = await response.json();
+            render();
+        } catch (err) {
+            showModal("ምስ Google Sheet ምርኻብ ኣይተኻእለን። መርበብ ሓበሬታኹም аረጋግጹ።");
+        } finally {
+            showSpinner(false);
+        }
+    }
+
+    function initApp() {
+        const currentEthDate = getEthiopianDate(new Date());
+        document.getElementById('year').value = currentEthDate.year;
+        document.getElementById('year').addEventListener('input', adjustDays);
+        
+        const monthSelect = document.getElementById('month');
+        ["01","02","03","04","05","06","07","08","09","10","11","12","13"].forEach(m => {
+            monthSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+        monthSelect.value = currentEthDate.month;
+        monthSelect.addEventListener('change', adjustDays);
+
+        adjustDays();
+        document.getElementById('day').value = currentEthDate.day;
+
+        const sidebar = document.getElementById('sidebar');
+        sidebar.innerHTML += `<div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>`;
+        
+        const groupSelect = document.getElementById('groupSelect');
+        groups.forEach(g => {
+            groupSelect.innerHTML += `<option value="${g}">${g}</option>`;
+            sidebar.innerHTML += `<div class="nav-item" onclick="filterGroup('${g}', this)">${g}</div>`;
+        });
+
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+        }
+
+        fetchCloudData();
+    }
 
     function showModal(msg, onConfirm) {
         const modal = document.getElementById('customModal');
         document.getElementById('modalMsg').innerText = msg;
         const btnContainer = document.getElementById('modalBtns');
         btnContainer.innerHTML = '';
+        
         if (onConfirm) {
-            const yesBtn = document.createElement('button'); yesBtn.innerText = "እወ"; yesBtn.className = "btn"; yesBtn.style.background = "#c0392b";
-            yesBtn.onclick = () => { onConfirm(); modal.style.display = 'none'; };
-            const noBtn = document.createElement('button'); noBtn.innerText = "አይ"; noBtn.className = "btn"; noBtn.style.background = "#95a5a6";
+            const noBtn = document.createElement('button'); noBtn.innerText = "አይ"; noBtn.className = "btn"; noBtn.style.background = "#94a3b8";
             noBtn.onclick = () => modal.style.display = 'none';
-            btnContainer.appendChild(noBtn); btnContainer.appendChild(yesBtn);
+            
+            const yesBtn = document.createElement('button'); yesBtn.innerText = "እወ"; yesBtn.className = "btn"; yesBtn.style.background = "#dc2626";
+            yesBtn.onclick = () => { onConfirm(); modal.style.display = 'none'; };
+            
+            btnContainer.appendChild(noBtn); 
+            btnContainer.appendChild(yesBtn);
         } else {
             const okBtn = document.createElement('button'); okBtn.innerText = "እሺ"; okBtn.className = "btn"; okBtn.style.background = "#3498db";
             okBtn.onclick = () => modal.style.display = 'none';
@@ -151,56 +503,233 @@
         modal.style.display = 'flex';
     }
 
-    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? 'enabled' : 'disabled'); }
-    if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark-mode');
-
-    function saveEntry() {
+    async function saveEntry() {
         const amountVal = document.getElementById('amount').value;
-        if (!amountVal || parseFloat(amountVal) <= 0) { showModal("በጃኹም ቅኑዕ መጠን ኣእትዉ"); return; }
-        const dateStr = `${document.getElementById('year').value}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
-        if (editId) {
-            data = data.map(i => i.id === editId ? { ...i, group: document.getElementById('groupSelect').value, date: dateStr, desc: document.getElementById('desc').value, amount: parseFloat(amountVal), type: entryType } : i);
-            editId = null; document.getElementById('addBtn').innerText = "መዝግብ";
-        } else {
-            data.push({ id: Date.now(), group: document.getElementById('groupSelect').value, date: dateStr, desc: document.getElementById('desc').value || "ዘይተገልጸ", amount: parseFloat(amountVal), type: entryType });
+        if (!amountVal || parseFloat(amountVal) <= 0) { 
+            showModal("በጃኹም ቅኑዕ መጠን ኣእትዉ"); 
+            return; 
         }
-        localStorage.setItem('ledger', JSON.stringify(data));
-        document.getElementById('amount').value = '';
+        
+        const dateStr = `${document.getElementById('year').value}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
+        const cat = document.getElementById('categorySelect').value;
+        const selectedGroup = document.getElementById('groupSelect').value;
+        const parsedAmount = parseFloat(amountVal);
+        
+        showSpinner(true);
+        
+        let targetId = editId ? editId : Date.now();
+        let payload = {
+            id: targetId,
+            date: dateStr,
+            group: selectedGroup,
+            category: cat,
+            amount: parsedAmount,
+            type: entryType,
+            action: editId ? 'UPDATE' : 'INSERT'
+        };
+
+        // FIXED DATA SYSTEM: Immediately apply modifications to visual UI interface array array stack
+        if (editId) {
+            data = data.map(item => item.id == editId ? { ...item, date: dateStr, group: selectedGroup, category: cat, amount: parsedAmount, type: entryType } : item);
+        } else {
+            data.push({ id: targetId, date: dateStr, group: selectedGroup, category: cat, amount: parsedAmount, type: entryType });
+        }
         render();
+
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors", 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            
+            document.getElementById('amount').value = '';
+            if(editId) {
+                editId = null;
+                document.getElementById('addBtn').innerText = "መዝግብ";
+            }
+            // Silent sync check safely updates layout structural dependencies later
+            setTimeout(fetchCloudData, 2000); 
+        } catch (err) {
+            showModal("ምዝገባ ፈሺሉ ኣሎ። ኢንተርኔት መስመርኩም ፈትሹ።");
+        } finally {
+            showSpinner(false);
+        }
     }
 
     function render() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
         const tbody = document.getElementById('ledgerBody');
         tbody.innerHTML = '';
+        const query = document.getElementById('tableSearch').value.toLowerCase().trim();
+        
+        const liveEthDate = getEthiopianDate(new Date());
+        const curEthYear = liveEthDate.year.toString();
+        const curEthMonth = liveEthDate.month;
+        const curEthDay = liveEthDate.day;
+        const targetEthTodayStr = `${curEthYear}-${curEthMonth}-${curEthDay}`;
+
         let filtered = data.filter(i => {
-            let match = (activeFilter === 'ጠቕላላ መዝገብ' || i.group === activeFilter) && i.desc.toLowerCase().includes(query);
-            if (start && i.date < start) match = false;
-            if (end && i.date > end) match = false;
-            return match;
+            const matchesGroup = (activeFilter === 'ጠቕላላ መዝገብ' || i.group === activeFilter);
+            const matchesSearch = !query || 
+                i.date.toLowerCase().includes(query) || 
+                i.group.toLowerCase().includes(query) || 
+                i.category.toLowerCase().includes(query) || 
+                i.amount.toString().includes(query);
+            
+            let matchesTime = true;
+            if (timeScopeFilter === 'today') {
+                matchesTime = (i.date === targetEthTodayStr);
+            } else if (timeScopeFilter === 'month') {
+                matchesTime = i.date.startsWith(`${curEthYear}-${curEthMonth}`);
+            } else if (timeScopeFilter === 'year') {
+                matchesTime = i.date.startsWith(curEthYear);
+            }
+            return matchesGroup && matchesSearch && matchesTime;
         });
+        
         let inTotal = 0, outTotal = 0;
         filtered.forEach(item => {
             if(item.type === 'in') inTotal += item.amount; else outTotal += item.amount;
-            tbody.innerHTML += `<tr><td>${item.date}</td><td>${item.group}</td><td>${item.desc}</td><td>${item.type=='in'?item.amount:''}</td><td>${item.type=='out'?item.amount:''}</td><td><button onclick="editEntry(${item.id})">✏️</button> <button onclick="del(${item.id})">🗑️</button></td></tr>`;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.date}</strong></td>
+                <td>${item.group}</td>
+                <td><span class="badge ${item.type == 'in' ? 'badge-in' : 'badge-out'}">${item.category || '-'}</span></td>
+                <td style="color:var(--success); font-weight:600;">${item.type == 'in' ? item.amount.toFixed(2) : '-'}</td>
+                <td style="color:var(--danger); font-weight:600;">${item.type == 'out' ? item.amount.toFixed(2) : '-'}</td>
+                <td>
+                    <button class="action-row-btn" onclick="editEntry(${item.id})">✏️</button> 
+                    <button class="action-row-btn" onclick="del(${item.id})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
+        
         document.getElementById('totalIn').innerText = inTotal.toFixed(2);
         document.getElementById('totalOut').innerText = outTotal.toFixed(2);
         document.getElementById('netBalance').innerText = (inTotal - outTotal).toFixed(2);
     }
 
-    function clearDateFilter() { document.getElementById('startDate').value = ''; document.getElementById('endDate').value = ''; render(); }
-    function editEntry(id) { const item = data.find(i => i.id === id); editId = id; document.getElementById('groupSelect').value = item.group; document.getElementById('desc').value = item.desc; document.getElementById('amount').value = item.amount; entryType = item.type; document.getElementById('addBtn').innerText = "ኣመሓይሽ"; render(); }
-    function del(id) { showModal("ክትስርዞ ትደሊ ዲኻ?", () => { data = data.filter(i => i.id !== id); localStorage.setItem('ledger', JSON.stringify(data)); render(); }); }
-    function filterGroup(g, el) { activeFilter = g; document.getElementById('viewTitle').innerText = g; document.getElementById('sidebar').classList.remove('active'); document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-nav')); if(el) el.classList.add('active-nav'); render(); }
-    function toggleType() { entryType = entryType === 'in' ? 'out' : 'in'; document.getElementById('typeBtn').innerText = entryType === 'in' ? 'ኣታዊ' : 'ወፃኢ'; document.getElementById('typeBtn').style.background = entryType === 'in' ? 'green' : 'red'; }
-    function exportExcel() { const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(data); XLSX.utils.book_append_sheet(wb, ws, "Ledger"); XLSX.writeFile(wb, "MyLedger.xlsx"); }
-    function clearAll() { showModal("ኩሉ መዝገብ ክትስርዞም ዲኻ?", () => { data = []; localStorage.setItem('ledger', JSON.stringify(data)); render(); }); }
+    function editEntry(id) { 
+        const item = data.find(i => i.id == id); 
+        if(!item) return;
+        editId = id; 
+        
+        document.getElementById('categorySelect').value = item.category;
+        document.getElementById('groupSelect').value = item.group; 
+        document.getElementById('amount').value = item.amount; 
+        
+        const dateParts = item.date.split('-');
+        if(dateParts.length === 3) {
+            document.getElementById('year').value = dateParts[0];
+            document.getElementById('month').value = dateParts[1];
+            adjustDays();
+            document.getElementById('day').value = dateParts[2];
+        }
+        
+        entryType = item.type; 
+        const typeBtn = document.getElementById('typeBtn');
+        typeBtn.innerText = entryType === 'in' ? 'ኣታዊ' : 'ወፃኢ'; 
+        typeBtn.style.background = entryType === 'in' ? '#16a34a' : '#dc2626';
+        document.getElementById('addBtn').innerText = "ኣመሓይሽ"; 
+    }
+
+    function del(id) { 
+        showModal("ክትስርዞ ትደሊ ዲኻ?", async () => { 
+            showSpinner(true);
+            // FIXED DATA SYSTEM: Clear array instantly to prevent visual UI lag metrics
+            data = data.filter(item => item.id != id);
+            render();
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: 'DELETE', id: id })
+                });
+                setTimeout(fetchCloudData, 2000);
+            } catch (err) {
+                showModal("ስራሕ ምስራዝ ኣይተዓወተን።");
+            } finally {
+                showSpinner(false);
+            }
+        }); 
+    }
+
+    function exportExcel() { 
+        if(data.length === 0) { showModal("ዝወፅእ መዝገብ የለን።"); return; }
+        const wb = XLSX.utils.book_new(); 
+        const ws = XLSX.utils.json_to_sheet(data); 
+        XLSX.utils.book_append_sheet(wb, ws, "Ledger"); 
+        XLSX.writeFile(wb, "Ledger.xlsx"); 
+    }
+
+    function clearAll() { 
+        showModal("🛑 ኣስተውዕል! እዚ ንኹሉ ናይ Google Sheet መዛግብቲ ክድምስስ እዩ። ርግጸኛ ዲኻ?", () => { 
+            showModal("ንመወዳእታ ግዜ፦ ርግጸኛ ዲኻ?", async () => {
+                showSpinner(true);
+                
+                // FIXED RESET SYSTEM: Clear data array immediately so dashboard updates right away
+                data = [];
+                render();
+
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: 'CLEAR_ALL' })
+                    });
+                    showModal("ኹሉ ተደምሲሱ ኣሎ።");
+                } catch(e) {
+                    showModal("ጌጋ ተፈጢሩ።");
+                } finally {
+                    showSpinner(false);
+                }
+            });
+        }); 
+    }
     
-    document.addEventListener('click', (e) => { const sidebar = document.getElementById('sidebar'); const burger = document.querySelector('.burger-menu'); if (!sidebar.contains(e.target) && !burger.contains(e.target)) sidebar.classList.remove('active'); });
-    render();
+    function filterGroup(g, el) { 
+        activeFilter = g; 
+        document.getElementById('viewTitle').innerText = g; 
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-nav')); 
+        if(el) el.classList.add('active-nav');
+        document.getElementById('sidebar').classList.remove('active');
+        render(); 
+    }
+
+    function filterByDateRange(scope, el) {
+        timeScopeFilter = scope;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active-chip'));
+        if(el) el.classList.add('active-chip');
+        render();
+    }
+
+    function toggleType() { 
+        entryType = entryType === 'in' ? 'out' : 'in'; 
+        const typeBtn = document.getElementById('typeBtn');
+        typeBtn.innerText = entryType === 'in' ? 'ኣታዊ' : 'ወፃኢ'; 
+        typeBtn.style.background = entryType === 'in' ? '#16a34a' : '#dc2626'; 
+    }
+
+    function toggleDarkMode() { 
+        document.body.classList.toggle('dark-mode'); 
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? 'enabled' : 'disabled');
+    }
+
+    document.addEventListener('click', (e) => { 
+        const sidebar = document.getElementById('sidebar'); 
+        const burger = document.querySelector('.burger-menu'); 
+        if (!sidebar.contains(e.target) && !burger.contains(e.target) && sidebar.classList.contains('active')) {
+             sidebar.classList.remove('active'); 
+        }
+    });
+
+    window.onload = initApp;
 </script>
 </body>
 </html>
