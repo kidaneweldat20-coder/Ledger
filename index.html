@@ -282,6 +282,47 @@
         @media (max-width: 480px) {
             .action-btns { grid-template-columns: repeat(2, 1fr); }
         }
+                /* Print-specific adjustments */
+        @media print {
+            .sidebar, 
+            .burger-menu, 
+            .action-btns, 
+            .input-form, 
+            .search-wrapper, 
+            .time-filter-strip,
+            .action-header, 
+            .action-row-btn {
+                display: none !important;
+            }
+            .main {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            .table-wrapper {
+                box-shadow: none !important;
+                border: none !important;
+            }
+            table {
+                width: 100% !important;
+                border: 1px solid #000;
+            }
+            th, td {
+                border: 1px solid #ccc !important;
+                padding: 10px !important;
+                color: #000 !important;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 10px !important;
+                margin-bottom: 20px !important;
+            }
+            .card {
+                border: 1px solid #000 !important;
+                box-shadow: none !important;
+            }
+        }
+
     </style>
 </head>
 <body>
