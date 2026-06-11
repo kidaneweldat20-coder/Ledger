@@ -51,7 +51,6 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.08); 
             transition: transform 0.3s ease; 
             border-radius: 0px 20px 20px 0px;
-            margin-left: 0px;
             overflow-y: auto;
         }
         .sidebar-header {
@@ -269,7 +268,7 @@
         }
         input:focus, select:focus { border-color: var(--accent); }
 
-        /* Calculator View Design Elements */
+        /* Calculator View Styles */
         .calc-input {
             width: 90px;
             padding: 8px;
@@ -329,9 +328,7 @@
 
         /* Responsive Breakpoints Rules */
         @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-260px); 
-              height: 100%;
-            }
+            .sidebar { transform: translateX(-260px); height: 100%; }
             .sidebar.active { transform: translateX(0); }
             .main { margin-left: 0; width: 100%; padding: 20px; }
             .burger-menu { display: block !important; }
@@ -348,48 +345,19 @@
         @media (max-width: 480px) {
             .action-btns { grid-template-columns: repeat(2, 1fr); }
         }
+        
         /* Print-specific adjustments */
         @media print {
-            .sidebar, 
-            .burger-menu, 
-            .action-btns, 
-            .input-form, 
-            .search-wrapper, 
-            .time-filter-strip,
-            .action-header, 
-            .action-row-btn,
-            .calc-control-panel {
+            .sidebar, .burger-menu, .action-btns, .input-form, .search-wrapper, .time-filter-strip, .action-header, .action-row-btn, .calc-control-panel {
                 display: none !important;
             }
-            .main {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-            }
-            .table-wrapper {
-                box-shadow: none !important;
-                border: none !important;
-            }
-            table {
-                width: 100% !important;
-                border: 1px solid #000;
-            }
-            th, td {
-                border: 1px solid #ccc !important;
-                padding: 10px !important;
-                color: #000 !important;
-            }
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr) !important;
-                gap: 10px !important;
-                margin-bottom: 20px !important;
-            }
-            .card {
-                border: 1px solid #000 !important;
-                box-shadow: none !important;
-            }
+            .main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .table-wrapper { box-shadow: none !important; border: none !important; }
+            table { width: 100% !important; border: 1px solid #000; }
+            th, td { border: 1px solid #ccc !important; padding: 10px !important; color: #000 !important; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10px !important; margin-bottom: 20px !important; }
+            .card { border: 1px solid #000 !important; box-shadow: none !important; }
         }
-
     </style>
 </head>
 <body>
@@ -397,8 +365,7 @@
 <div id="loadingSpinner">⏳ ምስ መረዳእታ ዓንቀጽ ይራኸብ ኣሎ...</div>
 
 <div class="sidebar" id="sidebar">
-    <div class="sidebar-header"> ዝርዝር</div>
-    <div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>
+    <div class="sidebar-header">ዝርዝር</div>
 </div>
 
 <div class="main">
@@ -528,10 +495,8 @@
     let activeFilter = 'ጠቕላላ መዝገብ';
     let timeScopeFilter = 'all'; 
     let editId = null;
-    
     const groups = ['ስራሕ መካየዲ', 'ሬጅመንት 20', 'ሬጅመንት 21', 'ሬጅመንት 22', 'ሬጅመንት 23', 'ሬጅመንት 24','ክ/ሰራዊት ስታፍ','ኮማንድ'];
 
-    // Original baseline fallback definition
     const calcBaselineDef = [
         { id: 1, name: 'ሬጅመንት 20', count: 21, rate: 2282.00 },
         { id: 2, name: 'ሬጅመንት 21', count: 22, rate: 2282.00 },
@@ -638,12 +603,9 @@
 
     function initApp() {
         const currentEthDate = getEthiopianDate(new Date());
-        
-        // Populate main ledger dynamic dates
         document.getElementById('year').value = currentEthDate.year;
         document.getElementById('year').addEventListener('input', adjustDays);
         
-        // Populate Calculator dynamic months & years configuration setup
         document.getElementById('calcYear').value = currentEthDate.year;
         document.getElementById('calcMonth').value = currentEthDate.month;
         
@@ -654,13 +616,15 @@
         monthSelect.value = currentEthDate.month;
         monthSelect.addEventListener('change', adjustDays);
 
-        const groupSelect = document.getElementById('groupSelect');
-        groupSelect.innerHTML = '';
-
         adjustDays();
         document.getElementById('day').value = currentEthDate.day;
 
         const sidebar = document.getElementById('sidebar');
+        sidebar.innerHTML = '<div class="sidebar-header">ዝርዝር</div>';
+        sidebar.innerHTML += `<div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>`;
+        
+        const groupSelect = document.getElementById('groupSelect');
+        groupSelect.innerHTML = '';
         groups.forEach(g => {
             groupSelect.innerHTML += `<option value="${g}">${g}</option>`;
             sidebar.innerHTML += `<div class="nav-item" onclick="filterGroup('${g}', this)">${g}</div>`;
@@ -677,12 +641,10 @@
         fetchCloudData();
     }
 
-    // Fetches saved month data from LocalStorage or yields baseline if fresh
     function getCalculatorDataForSelectedDate() {
         const year = document.getElementById('calcYear').value || '0000';
         const month = document.getElementById('calcMonth').value;
         const key = `calcData_${year}_${month}`;
-        
         const saved = localStorage.getItem(key);
         if (saved) {
             try { return JSON.parse(saved); } catch(e) { return calcBaselineDef; }
@@ -700,8 +662,6 @@
     function buildCalculatorTable() {
         const tbody = document.getElementById('calculatorBody');
         tbody.innerHTML = '';
-        
-        // Load stored data matching the selected scope date context
         const currentData = getCalculatorDataForSelectedDate();
         
         currentData.forEach((row, index) => {
@@ -743,18 +703,11 @@
                 rowTotalCell.innerText = `£ ${rowTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             }
 
-            currentRows.push({
-                id: row.id,
-                name: row.name,
-                count: count,
-                rate: rate
-            });
+            currentRows.push({ id: row.id, name: row.name, count: count, rate: rate });
         });
 
         document.getElementById('calcTotalHeadcount').innerText = grandTotalHeadcount;
         document.getElementById('calcGrandTotalBox').innerText = `ድምር (Total Budget): £ ${grandTotalBudget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        
-        // Persist the changes onto storage mapping context automatically
         saveCalculatorDataForSelectedDate(currentRows);
     }
 
@@ -785,7 +738,7 @@
 
     function onCalculatorDateChange() {
         updateCalculatorTitle();
-        buildCalculatorTable(); // Rebuilds table reading from the storage context matching the date
+        buildCalculatorTable();
     }
 
     function updateCalculatorTitle() {
@@ -832,29 +785,15 @@
     }
 
     async function saveEntry() {
-        const yearVal = document.getElementById('year').value;
         const amountVal = document.getElementById('amount').value;
-        const selectedGroup = document.getElementById('groupSelect').value;
-        const cat = document.getElementById('categorySelect').value;
-
-        if (!yearVal || yearVal.trim() === "") {
-            showModal("በጃኹም ቅኑዕ ዓመት ኣእትዉ።");
-            return;
-        }
-        if (!selectedGroup || selectedGroup.trim() === "") {
-            showModal("በጃኹም ጉጅለ ምረጹ።");
-            return;
-        }
-        if (!cat || cat.trim() === "") {
-            showModal("በጃኹም ዓይነት ወይ ምኽንያት ምረጹ።");
-            return;
-        }
         if (!amountVal || parseFloat(amountVal) <= 0) { 
-            showModal("በጃኹም ቅኑዕ መጠን ገንዘብ (መጠን) ኣእትዉ።"); 
+            showModal("በጃኹም ቅኑዕ መጠን ኣእትዉ"); 
             return; 
         }
         
-        const dateStr = `${yearVal}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
+        const dateStr = `${document.getElementById('year').value}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
+        const cat = document.getElementById('categorySelect').value;
+        const selectedGroup = document.getElementById('groupSelect').value;
         const parsedAmount = parseFloat(amountVal);
         
         showSpinner(true);
