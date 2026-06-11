@@ -16,6 +16,7 @@
             --card: #ffffff; 
             --border: #e2e8f0; 
             --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.07);
+            --bal:purple;
         }
         body.dark-mode { 
             --primary: #0f172a; 
@@ -24,6 +25,9 @@
             --text: #f1f5f9; 
             --card: #1e293b; 
             --border: #334155; 
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --bal:#38bdf8;
         }
         body { 
             font-family: 'Segoe UI', -apple-system, sans-serif; 
@@ -40,14 +44,15 @@
             left: 0; 
             top: 0; 
             width: 260px; 
-            height: 30%; 
+            height: 100%; 
             background: var(--primary); 
             color: white; 
             z-index: 2000; 
             box-shadow: 4px 0 20px rgba(0,0,0,0.08); 
             transition: transform 0.3s ease; 
-            border-radius: 20px;
-            margin-left: 1px;
+            border-radius: 0px 20px 20px 0px;
+            margin-left: 0px;
+            overflow-y: auto;
         }
         .sidebar-header {
             padding: 24px 20px; 
@@ -76,6 +81,11 @@
             border-left: 5px solid #fff; 
             font-weight: 600;
             opacity: 1;
+        }
+        .nav-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.15);
+            margin: 10px 0;
         }
 
         /* Main Workspace Container */
@@ -174,7 +184,24 @@
             transition: transform 0.2s;
         }
         .card:hover { transform: translateY(-3px); }
-        .card h3 { margin: 0 0 10px 0; font-size: 0.95rem; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; }
+       .in{
+          margin: 0 0 10px 0;
+          font-size: 0.95rem; 
+          text-transform: uppercase; 
+          color:var(--success); 
+          letter-spacing: 0.5px; }
+       .out{ 
+          margin: 0 0 10px 0;
+          font-size: 0.95rem; 
+          text-transform: uppercase; 
+          color:var(--danger); 
+          letter-spacing: 0.5px; }
+        .bal{ 
+          margin: 0 0 10px 0; 
+          font-size: 0.95rem;
+          text-transform: uppercase;
+          color:var(--bal); 
+          letter-spacing: 0.5px; }
         .card p { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text); }
         #totalIn { color: var(--success); }
         #totalOut { color: var(--danger); }
@@ -242,6 +269,45 @@
         }
         input:focus, select:focus { border-color: var(--accent); }
 
+        /* Calculator View Design Elements */
+        .calc-input {
+            width: 90px;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .calc-total-box {
+            background: var(--accent);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .calc-head-badge {
+            background: #2ecc71;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .calc-control-panel {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border: 1px solid var(--border);
+        }
+
         /* Table Design Framework */
         .table-wrapper { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
@@ -282,7 +348,7 @@
         @media (max-width: 480px) {
             .action-btns { grid-template-columns: repeat(2, 1fr); }
         }
-                /* Print-specific adjustments */
+        /* Print-specific adjustments */
         @media print {
             .sidebar, 
             .burger-menu, 
@@ -291,7 +357,8 @@
             .search-wrapper, 
             .time-filter-strip,
             .action-header, 
-            .action-row-btn {
+            .action-row-btn,
+            .calc-control-panel {
                 display: none !important;
             }
             .main {
@@ -331,13 +398,14 @@
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header"> ዝርዝር</div>
+    <div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>
 </div>
 
 <div class="main">
     <div class="top-bar">
         <div class="burger-menu" onclick="event.stopPropagation(); document.getElementById('sidebar').classList.add('active')">☰</div>
         <h2 id="viewTitle" style="margin:0; font-weight: 800;">ጠቕላላ መዝገብ</h2>
-        <div class="action-btns">
+        <div class="action-btns" id="topBarActionBtns">
             <button class="btn" style="background:#475569" onclick="toggleDarkMode()">🌓</button>
             <button class="btn" style="background:#0284c7" onclick="fetchCloudData()">🔄 Sync</button>
             <button class="btn" style="background:#16a34a" onclick="exportExcel()">📊 Excel</button>
@@ -346,55 +414,102 @@
         </div>
     </div>
 
-    <div class="search-wrapper">
-        <input type="text" id="tableSearch" placeholder="🔍 ኣብዚ ይድለ (ብሬጅመንት ዓይነት ወይ ዕለት...)" oninput="render()">
+    <div id="ledgerWorkspace">
+        <div class="search-wrapper">
+            <input type="text" id="tableSearch" placeholder="🔍 ኣብዚ ይድለ (ብሬጅመንት ዓይነት ወይ ዕለት...)" oninput="render()">
+        </div>
+
+        <div class="stats-grid">
+            <div class="card"><h3 class="in">ኣታዊ</h3><p id="totalIn">0.00</p></div>
+            <div class="card"><h3 class="out">ወፃኢ</h3><p id="totalOut">0.00</p></div>
+            <div class="card"><h3 class="bal">ቀራዪ</h3><p id="netBalance">0.00</p></div>
+        </div>
+
+        <div class="time-filter-strip">
+            <div class="filter-chip active-chip" onclick="filterByDateRange('all', this)">ኩሉ (All)</div>
+            <div class="filter-chip" onclick="filterByDateRange('today', this)">ሎሚ (Today)</div>
+            <div class="filter-chip" onclick="filterByDateRange('month', this)">እዚ ወርሒ (This Month)</div>
+            <div class="filter-chip" onclick="filterByDateRange('year', this)">እዚ ዓመት (This Year)</div>
+        </div>
+
+        <div class="input-form">
+            <input type="number" id="year" placeholder="ዓመት">
+            <select id="month"></select>
+            <select id="day"></select>
+            <select id="groupSelect"></select>
+            <select id="categorySelect">
+                <option value="ካብ ኮር 311 ኣታዊ ዝኾነ">ካብ ኮር 311 ኣታዊ ዝኾነ</option>
+                <option value="ወፃኢ (ካብ ብሓደራ)">ካብ ብሓደራ ተቐማጢ ቀለብ ወፃኢ ዝኾነ</option>
+                <option value="ኣታዊ (ስራሕ መካየዲ)">ካብ ኮር 311 ኣታዊ ዝኾነ ስራሕ መካየዲ</option>
+                <option value="ወፃኢ (ስራሕ መካየዲ)">ካብ ናይ ስራሕ መካየዲ ወፃኢ ዝኾነ</option>
+                <option value="ዝውውር">ዝውውር ዝተገበረ</option>
+                <option value="ኻልእ">ኻልእ</option>
+            </select>
+            <input type="number" id="amount" placeholder="መጠን">
+            <button id="typeBtn" class="btn" style="background:#16a34a" onclick="toggleType()">ኣታዊ</button>
+            <button id="addBtn" class="btn" style="background:#3498db" onclick="saveEntry()">መዝግብ</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ዕለት</th>
+                        <th>ጉጅለ</th>
+                        <th>ዓይነት/ምኽንያት</th>
+                        <th>ኣታዊ</th>
+                        <th>ወፃኢ</th>
+                        <th>ቀራዪ</th>
+                        <th class="action-header">ተግባር</th>
+                    </tr>
+                </thead>
+                <tbody id="ledgerBody"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <div class="card"><h3>ኣታዊ</h3><p id="totalIn">0.00</p></div>
-        <div class="card"><h3>ወፃኢ</h3><p id="totalOut">0.00</p></div>
-        <div class="card"><h3>ቀራዪ</h3><p id="netBalance">0.00</p></div>
-    </div>
-
-    <div class="time-filter-strip">
-        <div class="filter-chip active-chip" onclick="filterByDateRange('all', this)">ኩሉ (All)</div>
-        <div class="filter-chip" onclick="filterByDateRange('today', this)">ሎሚ (Today)</div>
-        <div class="filter-chip" onclick="filterByDateRange('month', this)">እዚ ወርሒ (This Month)</div>
-        <div class="filter-chip" onclick="filterByDateRange('year', this)">እዚ ዓመት (This Year)</div>
-    </div>
-
-    <div class="input-form">
-        <input type="number" id="year" placeholder="ዓመት">
-        <select id="month"></select>
-        <select id="day"></select>
-        <select id="groupSelect"></select>
-        <select id="categorySelect">
-            <option value="ካብ ኮር 311 ኣታዊ ዝኾነ">ካብ ኮር 311 ኣታዊ ዝኾነ</option>
-            <option value="ወፃኢ (ካብ ብሓደራ)">ካብ ብሓደራ ተቐማጢ ቀለብ ወፃኢ ዝኾነ</option>
-            <option value="ኣታዊ (ስራሕ መካየዲ)">ካብ ኮር 311 ኣታዊ ዝኾነ ስራሕ መካየዲ</option>
-            <option value="ወፃኢ (ስራሕ መካየዲ)">ካብ ናይ ስራሕ መካየዲ ወፃኢ ዝኾነ</option>
-            <option value="ዝውውር">ዝውውር ዝተገበረ</option>
-            <option value="ኻልእ">ኻልእ</option>
-        </select>
-        <input type="number" id="amount" placeholder="መጠን">
-        <button id="typeBtn" class="btn" style="background:#16a34a" onclick="toggleType()">ኣታዊ</button>
-        <button id="addBtn" class="btn" style="background:#3498db" onclick="saveEntry()">መዝግብ</button>
-    </div>
-
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>ዕለት</th>
-                    <th>ጉጅለ</th>
-                    <th>ዓይነት/ምኽንያት</th>
-                    <th>ኣታዊ</th>
-                    <th>ወፃኢ</th>
-                    <th class="action-header">ተግባር</th>
-                </tr>
-            </thead>
-            <tbody id="ledgerBody"></tbody>
-        </table>
+    <div id="calculatorWorkspace" style="display: none;">
+        <div class="calc-control-panel">
+            <div>
+                <label style="font-weight: 600; margin-right: 5px;">ዓመት፡</label>
+                <input type="number" id="calcYear" style="width: 100px; padding: 8px;" oninput="onCalculatorDateChange()">
+            </div>
+            <div>
+                <label style="font-weight: 600; margin-right: 5px;">ወርሒ፡</label>
+                <select id="calcMonth" style="padding: 8px;" onchange="onCalculatorDateChange()">
+                    <option value="01">01</option><option value="02">02</option>
+                    <option value="03">03</option><option value="04">04</option>
+                    <option value="05">05</option><option value="06">06</option>
+                    <option value="07">07</option><option value="08">08</option>
+                    <option value="09">09</option><option value="10">10</option>
+                    <option value="11">11</option><option value="12">12</option>
+                    <option value="13">13</option>
+                </select>
+            </div>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                <label style="font-weight: 700; font-size: 1.05rem;">ብዝሒ ጠቕላላ ሓይሊ ሰብ፦</label>
+                <span id="calcTotalHeadcount" class="calc-head-badge">0</span>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ታ.ቁ</th>
+                        <th>ኣሃዱ</th>
+                        <th>በዝሒ ሰብ</th>
+                        <th>በጀት ን ሓደ ሰብ</th>
+                        <th>ጠቕላላ በጀት</th>
+                    </tr>
+                </thead>
+                <tbody id="calculatorBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="calcGrandTotalBox" class="calc-total-box">
+            ድምር (Total Budget): £ 0.00
+        </div>
     </div>
 </div>
 
@@ -413,40 +528,67 @@
     let activeFilter = 'ጠቕላላ መዝገብ';
     let timeScopeFilter = 'all'; 
     let editId = null;
+    
     const groups = ['ስራሕ መካየዲ', 'ሬጅመንት 20', 'ሬጅመንት 21', 'ሬጅመንት 22', 'ሬጅመንት 23', 'ሬጅመንት 24','ክ/ሰራዊት ስታፍ','ኮማንድ'];
+
+    // Original baseline fallback definition
+    const calcBaselineDef = [
+        { id: 1, name: 'ሬጅመንት 20', count: 21, rate: 2282.00 },
+        { id: 2, name: 'ሬጅመንት 21', count: 22, rate: 2282.00 },
+        { id: 3, name: 'ሬጅመንት 22', count: 31, rate: 2282.00 },
+        { id: 4, name: 'ሬጅመንት 23', count: 12, rate: 2282.00 },
+        { id: 5, name: 'ሬጅመንት 24', count: 17, rate: 2282.00 },
+        { id: 6, name: 'ኮማንድ', count: 11, rate: 2282.00 },
+        { id: 7, name: 'ክ/ሰራዊት ስታፍ', count: 19, rate: 2282.00 }
+    ];
 
     function showSpinner(show) {
         document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
     }
 
+    function formatCloudDate(dateString) {
+        if (!dateString) return '-';
+        let cleaned = dateString.toString().trim();
+        if (cleaned.includes('T')) {
+            let d = new Date(cleaned);
+            if (!isNaN(d.getTime())) {
+                let y = d.getFullYear();
+                let m = (d.getMonth() + 1).toString().padStart(2, '0');
+                let day = d.getDate().toString().padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+        }
+        if (/^\d{4}-\d{2}-\d{2}/.test(cleaned)) {
+            return cleaned.substring(0, 10);
+        }
+        return cleaned;
+    }
+
     function getEthiopianDate(gregorianDate) {
-        const gregYear = gregorianDate.getFullYear();
-        const gregMonth = gregorianDate.getMonth() + 1;
-        const gregDay = gregorianDate.getDate();
+        let gy = gregorianDate.getFullYear();
+        let gm = gregorianDate.getMonth() + 1;
+        let gd = gregorianDate.getDate();
 
-        let totalDays = 0;
-        for (let y = 1; y < gregYear; y++) {
-            totalDays += ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
-        }
-        const gregMonthDays = [0, 31, ((gregYear % 4 === 0 && gregYear % 100 !== 0) || gregYear % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        for (let m = 1; m < gregMonth; m++) {
-            totalDays += gregMonthDays[m];
-        }
-        totalDays += gregDay;
+        let isNextYearGregLeap = ((gy + 1) % 4 === 0 && (gy + 1) % 100 !== 0) || ((gy + 1) % 400 === 0);
+        let newYearDay = isNextYearGregLeap ? 12 : 11;
 
-        let ethDays = totalDays - 2796; 
-        let ethYear = Math.floor(ethDays / 1461) * 4;
-        ethDays %= 1461;
-        
-        while (ethDays > 365) {
-            if (ethYear % 4 === 3 && ethDays === 366) break;
-            ethDays -= (ethYear % 4 === 3) ? 366 : 365;
-            ethYear++;
+        let ethYear = gy - 8;
+        if (gm > 9 || (gm === 9 && gd >= newYearDay)) {
+            ethYear = gy - 7;
         }
-        ethYear++;
 
-        let ethMonth = Math.floor((ethDays - 1) / 30) + 1;
-        let ethDay = ((ethDays - 1) % 30) + 1;
+        let prevYear = (ethYear === gy - 7) ? gy : gy - 1;
+        let prevIsNextYearGregLeap = ((prevYear + 1) % 4 === 0 && (prevYear + 1) % 100 !== 0) || ((prevYear + 1) % 400 === 0);
+        let prevNewYearDay = prevIsNextYearGregLeap ? 12 : 11;
+
+        let date1 = Date.UTC(prevYear, 8, prevNewYearDay);
+        let date2 = Date.UTC(gy, gm - 1, gd);
+
+        let diffDays = Math.floor((date2 - date1) / (1000 * 60 * 60 * 24));
+        let ethMonth = Math.floor(diffDays / 30) + 1;
+        let ethDay = (diffDays % 30) + 1;
+
+        if (ethMonth > 13) ethMonth = 13;
 
         return {
             year: ethYear,
@@ -481,7 +623,11 @@
         showSpinner(true);
         try {
             let response = await fetch(GOOGLE_SCRIPT_URL);
-            data = await response.json();
+            let rawData = await response.json();
+            data = rawData.map(item => {
+                item.date = formatCloudDate(item.date);
+                return item;
+            });
             render();
         } catch (err) {
             showModal("ምስ Google Sheet ምርኻብ ኣይተኻእለን። መርበብ ሓበሬታኹም аረጋግጹ።");
@@ -492,8 +638,14 @@
 
     function initApp() {
         const currentEthDate = getEthiopianDate(new Date());
+        
+        // Populate main ledger dynamic dates
         document.getElementById('year').value = currentEthDate.year;
         document.getElementById('year').addEventListener('input', adjustDays);
+        
+        // Populate Calculator dynamic months & years configuration setup
+        document.getElementById('calcYear').value = currentEthDate.year;
+        document.getElementById('calcMonth').value = currentEthDate.month;
         
         const monthSelect = document.getElementById('month');
         ["01","02","03","04","05","06","07","08","09","10","11","12","13"].forEach(m => {
@@ -502,23 +654,158 @@
         monthSelect.value = currentEthDate.month;
         monthSelect.addEventListener('change', adjustDays);
 
+        const groupSelect = document.getElementById('groupSelect');
+        groupSelect.innerHTML = '';
+
         adjustDays();
         document.getElementById('day').value = currentEthDate.day;
 
         const sidebar = document.getElementById('sidebar');
-        sidebar.innerHTML += `<div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>`;
-        
-        const groupSelect = document.getElementById('groupSelect');
         groups.forEach(g => {
             groupSelect.innerHTML += `<option value="${g}">${g}</option>`;
             sidebar.innerHTML += `<div class="nav-item" onclick="filterGroup('${g}', this)">${g}</div>`;
         });
 
+        sidebar.innerHTML += `<div class="nav-divider"></div>`;
+        sidebar.innerHTML += `<div class="nav-item" id="navCalcBtn" onclick="openCalculatorView(this)" style="color: #58efa6; font-weight: bold;">📊 ድልድል ሓ/ሰብ</div>`;
+
         if (localStorage.getItem('darkMode') === 'enabled') {
             document.body.classList.add('dark-mode');
         }
 
+        buildCalculatorTable();
         fetchCloudData();
+    }
+
+    // Fetches saved month data from LocalStorage or yields baseline if fresh
+    function getCalculatorDataForSelectedDate() {
+        const year = document.getElementById('calcYear').value || '0000';
+        const month = document.getElementById('calcMonth').value;
+        const key = `calcData_${year}_${month}`;
+        
+        const saved = localStorage.getItem(key);
+        if (saved) {
+            try { return JSON.parse(saved); } catch(e) { return calcBaselineDef; }
+        }
+        return calcBaselineDef;
+    }
+
+    function saveCalculatorDataForSelectedDate(currentRows) {
+        const year = document.getElementById('calcYear').value || '0000';
+        const month = document.getElementById('calcMonth').value;
+        const key = `calcData_${year}_${month}`;
+        localStorage.setItem(key, JSON.stringify(currentRows));
+    }
+
+    function buildCalculatorTable() {
+        const tbody = document.getElementById('calculatorBody');
+        tbody.innerHTML = '';
+        
+        // Load stored data matching the selected scope date context
+        const currentData = getCalculatorDataForSelectedDate();
+        
+        currentData.forEach((row, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row.id}</td>
+                <td style="font-weight: 600; text-align: left; padding-left: 30px;">${row.name}</td>
+                <td>
+                    <input type="number" class="calc-input" id="calcHead-${index}" value="${row.count}" min="0" oninput="calculateAndSaveBudgetTotal()">
+                </td>
+                <td>
+                    <input type="number" class="calc-input" id="calcRate-${index}" value="${row.rate}" min="0" step="0.01" oninput="calculateAndSaveBudgetTotal()">
+                </td>
+                <td style="font-weight: 700; width: 180px;" id="calcRowTotal-${index}">£ 0.00</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        updateTotalsOnly();
+    }
+
+    function calculateAndSaveBudgetTotal() {
+        let currentRows = [];
+        let grandTotalBudget = 0;
+        let grandTotalHeadcount = 0;
+
+        calcBaselineDef.forEach((row, index) => {
+            const headcountInput = document.getElementById(`calcHead-${index}`);
+            const rateInput = document.getElementById(`calcRate-${index}`);
+            
+            let count = headcountInput ? parseInt(headcountInput.value) || 0 : 0;
+            let rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
+            
+            let rowTotal = count * rate;
+            grandTotalHeadcount += count;
+            grandTotalBudget += rowTotal;
+
+            const rowTotalCell = document.getElementById(`calcRowTotal-${index}`);
+            if (rowTotalCell) {
+                rowTotalCell.innerText = `£ ${rowTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+
+            currentRows.push({
+                id: row.id,
+                name: row.name,
+                count: count,
+                rate: rate
+            });
+        });
+
+        document.getElementById('calcTotalHeadcount').innerText = grandTotalHeadcount;
+        document.getElementById('calcGrandTotalBox').innerText = `ድምር (Total Budget): £ ${grandTotalBudget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Persist the changes onto storage mapping context automatically
+        saveCalculatorDataForSelectedDate(currentRows);
+    }
+
+    function updateTotalsOnly() {
+        let grandTotalBudget = 0;
+        let grandTotalHeadcount = 0;
+
+        calcBaselineDef.forEach((row, index) => {
+            const headcountInput = document.getElementById(`calcHead-${index}`);
+            const rateInput = document.getElementById(`calcRate-${index}`);
+            
+            let count = headcountInput ? parseInt(headcountInput.value) || 0 : 0;
+            let rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
+            
+            let rowTotal = count * rate;
+            grandTotalHeadcount += count;
+            grandTotalBudget += rowTotal;
+
+            const rowTotalCell = document.getElementById(`calcRowTotal-${index}`);
+            if (rowTotalCell) {
+                rowTotalCell.innerText = `£ ${rowTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+        });
+
+        document.getElementById('calcTotalHeadcount').innerText = grandTotalHeadcount;
+        document.getElementById('calcGrandTotalBox').innerText = `ድምር (Total Budget): £ ${grandTotalBudget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    }
+
+    function onCalculatorDateChange() {
+        updateCalculatorTitle();
+        buildCalculatorTable(); // Rebuilds table reading from the storage context matching the date
+    }
+
+    function updateCalculatorTitle() {
+        const selectedMonth = document.getElementById('calcMonth').value;
+        const selectedYear = document.getElementById('calcYear').value || '';
+        document.getElementById('viewTitle').innerText = `ድልድል ሓይሊ ሰብ ወርሒ ${selectedMonth} / ${selectedYear}`;
+    }
+
+    function openCalculatorView(element) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-nav'));
+        if (element) element.classList.add('active-nav');
+        
+        updateCalculatorTitle();
+        buildCalculatorTable();
+        
+        document.getElementById('ledgerWorkspace').style.display = "none";
+        document.getElementById('calculatorWorkspace').style.display = "block";
+        
+        document.getElementById('topBarActionBtns').style.visibility = "hidden";
+        document.getElementById('sidebar').classList.remove('active');
     }
 
     function showModal(msg, onConfirm) {
@@ -545,15 +832,29 @@
     }
 
     async function saveEntry() {
+        const yearVal = document.getElementById('year').value;
         const amountVal = document.getElementById('amount').value;
+        const selectedGroup = document.getElementById('groupSelect').value;
+        const cat = document.getElementById('categorySelect').value;
+
+        if (!yearVal || yearVal.trim() === "") {
+            showModal("በጃኹም ቅኑዕ ዓመት ኣእትዉ።");
+            return;
+        }
+        if (!selectedGroup || selectedGroup.trim() === "") {
+            showModal("በጃኹም ጉጅለ ምረጹ።");
+            return;
+        }
+        if (!cat || cat.trim() === "") {
+            showModal("በጃኹም ዓይነት ወይ ምኽንያት ምረጹ።");
+            return;
+        }
         if (!amountVal || parseFloat(amountVal) <= 0) { 
-            showModal("በጃኹም ቅኑዕ መጠን ኣእትዉ"); 
+            showModal("በጃኹም ቅኑዕ መጠን ገንዘብ (መጠን) ኣእትዉ።"); 
             return; 
         }
         
-        const dateStr = `${document.getElementById('year').value}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
-        const cat = document.getElementById('categorySelect').value;
-        const selectedGroup = document.getElementById('groupSelect').value;
+        const dateStr = `${yearVal}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
         const parsedAmount = parseFloat(amountVal);
         
         showSpinner(true);
@@ -569,7 +870,6 @@
             action: editId ? 'UPDATE' : 'INSERT'
         };
 
-        // FIXED DATA SYSTEM: Immediately apply modifications to visual UI interface array array stack
         if (editId) {
             data = data.map(item => item.id == editId ? { ...item, date: dateStr, group: selectedGroup, category: cat, amount: parsedAmount, type: entryType } : item);
         } else {
@@ -590,7 +890,6 @@
                 editId = null;
                 document.getElementById('addBtn').innerText = "መዝግብ";
             }
-            // Silent sync check safely updates layout structural dependencies later
             setTimeout(fetchCloudData, 2000); 
         } catch (err) {
             showModal("ምዝገባ ፈሺሉ ኣሎ። ኢንተርኔት መስመርኩም ፈትሹ።");
@@ -630,8 +929,16 @@
         });
         
         let inTotal = 0, outTotal = 0;
+        let runningBalance = 0;
+
         filtered.forEach(item => {
-            if(item.type === 'in') inTotal += item.amount; else outTotal += item.amount;
+            if(item.type === 'in') {
+                inTotal += item.amount;
+                runningBalance += item.amount;
+            } else {
+                outTotal += item.amount;
+                runningBalance -= item.amount;
+            }
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -640,6 +947,7 @@
                 <td><span class="badge ${item.type == 'in' ? 'badge-in' : 'badge-out'}">${item.category || '-'}</span></td>
                 <td style="color:var(--success); font-weight:600;">${item.type == 'in' ? item.amount.toFixed(2) : '-'}</td>
                 <td style="color:var(--danger); font-weight:600;">${item.type == 'out' ? item.amount.toFixed(2) : '-'}</td>
+                <td style="color:var(--bal); font-weight:600;">${runningBalance.toFixed(2)}</td>
                 <td>
                     <button class="action-row-btn" onclick="editEntry(${item.id})">✏️</button> 
                     <button class="action-row-btn" onclick="del(${item.id})">🗑️</button>
@@ -680,7 +988,6 @@
     function del(id) { 
         showModal("ክትስርዞ ትደሊ ዲኻ?", async () => { 
             showSpinner(true);
-            // FIXED DATA SYSTEM: Clear array instantly to prevent visual UI lag metrics
             data = data.filter(item => item.id != id);
             render();
 
@@ -712,8 +1019,6 @@
         showModal("🛑 ኣስተውዕል! እዚ ንኹሉ ናይ Google Sheet መዛግብቲ ክድምስስ እዩ። ርግጸኛ ዲኻ?", () => { 
             showModal("ንመወዳእታ ግዜ፦ ርግጸኛ ዲኻ?", async () => {
                 showSpinner(true);
-                
-                // FIXED RESET SYSTEM: Clear data array immediately so dashboard updates right away
                 data = [];
                 render();
 
@@ -737,6 +1042,11 @@
     function filterGroup(g, el) { 
         activeFilter = g; 
         document.getElementById('viewTitle').innerText = g; 
+        
+        document.getElementById('calculatorWorkspace').style.display = "none";
+        document.getElementById('ledgerWorkspace').style.display = "block";
+        document.getElementById('topBarActionBtns').style.visibility = "visible";
+
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active-nav')); 
         if(el) el.classList.add('active-nav');
         document.getElementById('sidebar').classList.remove('active');
