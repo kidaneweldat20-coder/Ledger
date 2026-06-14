@@ -17,9 +17,10 @@
             --border: #e2e8f0; 
             --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.07);
             --bal:purple;
+            --col:white;
         }
         body.dark-mode { 
-            --primary: #0f172a; 
+            --primary:#567; 
             --accent: #38bdf8; 
             --bg: #020617; 
             --text: #f1f5f9; 
@@ -28,6 +29,7 @@
             --success: #2ecc71;
             --danger: #e74c3c;
             --bal:#38bdf8;
+            --col:white;
         }
         body { 
             font-family: 'Segoe UI', -apple-system, sans-serif; 
@@ -44,14 +46,15 @@
             left: 0; 
             top: 0; 
             width: 260px; 
-            height: 100%; 
+            height: 30%; 
             background: var(--primary); 
-            color: white; 
             z-index: 2000; 
             box-shadow: 4px 0 20px rgba(0,0,0,0.08); 
             transition: transform 0.3s ease; 
             border-radius: 0px 20px 20px 0px;
             overflow-y: auto;
+            color:var(--col);
+           font-weight: 700;
         }
         .sidebar-header {
             padding: 24px 20px; 
@@ -310,7 +313,16 @@
         /* Table Design Framework */
         .table-wrapper { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: rgba(0,0,0,0.02); padding: 18px; color: #64748b; text-transform: uppercase; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.5px; border-bottom: 2px solid var(--border); text-align: center;}
+        th {
+          background: rgba(0,0,0,0.02); 
+          padding: 18px; color: #64748b;
+          text-transform: uppercase;
+          font-size: 0.8rem;
+          color:var(--text);
+          font-weight : 700;
+          letter-spacing: 0.5px;
+          border-bottom: 2px solid var(--border);
+          text-align: center;}
         td { padding: 18px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.95rem; }
         tr:hover td { background: rgba(0,0,0,0.01); }
 
@@ -328,7 +340,7 @@
 
         /* Responsive Breakpoints Rules */
         @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-260px); height: 100%; }
+            .sidebar { transform: translateX(-260px); height: 50%; }
             .sidebar.active { transform: translateX(0); }
             .main { margin-left: 0; width: 100%; padding: 20px; }
             .burger-menu { display: block !important; }
@@ -422,7 +434,7 @@
                 <thead>
                     <tr>
                         <th>ዕለት</th>
-                        <th>ጉጅለ</th>
+                        <th>ኣሃዱ</th>
                         <th>ዓይነት/ምኽንያት</th>
                         <th>ኣታዊ</th>
                         <th>ወፃኢ</th>
@@ -454,7 +466,7 @@
                 </select>
             </div>
             <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-                <label style="font-weight: 700; font-size: 1.05rem;">ብዝሒ ጠቕላላ ሓይሊ ሰብ፦</label>
+                <label style="font-weight: 700; font-size: 1.05rem;">በዝሒ ጠቕላላ ሓይሊ ሰብ፦</label>
                 <span id="calcTotalHeadcount" class="calc-head-badge">0</span>
             </div>
         </div>
