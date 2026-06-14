@@ -19,6 +19,47 @@
             --bal:purple;
             --col:white;
         }
+       /* --- STICKY LAYOUT FIXES --- */
+        .main { 
+            margin-left: 260px; 
+            width: calc(100% - 260px); 
+            padding: 0px 40px 40px 40px; 
+            box-sizing: border-box; 
+        }
+        
+        .top-bar { 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            background: var(--bg); 
+            padding: 20px 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+        }
+
+        .stats-grid { 
+            position: sticky; 
+            top: 85px; 
+            z-index: 999; 
+            background: var(--bg); 
+            padding: 10px 0; 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 25px; 
+        }
+        
+        .input-form {
+    position: sticky;
+    top: 215px;
+    z-index: 998;
+    background: var(--card); /* Form needs card bg to hide scrolling text */
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+    border: 1px solid var(--border);
+}
         body.dark-mode { 
             --primary:#567; 
             --accent: #38bdf8; 
@@ -40,13 +81,13 @@
             display: flex; 
         }
 
-        /* Sidebar Styling */
+        /* Sidebar Styling - Height Fixed to 100vh */
         .sidebar { 
             position: fixed; 
             left: 0; 
             top: 0; 
             width: 260px; 
-            height: 30%; 
+            height: 100vh; 
             background: var(--primary); 
             z-index: 2000; 
             box-shadow: 4px 0 20px rgba(0,0,0,0.08); 
@@ -54,7 +95,7 @@
             border-radius: 0px 20px 20px 0px;
             overflow-y: auto;
             color:var(--col);
-           font-weight: 700;
+            font-weight: 700;
         }
         .sidebar-header {
             padding: 24px 20px; 
@@ -186,24 +227,27 @@
             transition: transform 0.2s;
         }
         .card:hover { transform: translateY(-3px); }
-       .in{
-          margin: 0 0 10px 0;
-          font-size: 0.95rem; 
-          text-transform: uppercase; 
-          color:var(--success); 
-          letter-spacing: 0.5px; }
-       .out{ 
-          margin: 0 0 10px 0;
-          font-size: 0.95rem; 
-          text-transform: uppercase; 
-          color:var(--danger); 
-          letter-spacing: 0.5px; }
-        .bal{ 
-          margin: 0 0 10px 0; 
-          font-size: 0.95rem;
-          text-transform: uppercase;
-          color:var(--bal); 
-          letter-spacing: 0.5px; }
+        .in {
+            margin: 0 0 10px 0;
+            font-size: 0.95rem; 
+            text-transform: uppercase; 
+            color:var(--success); 
+            letter-spacing: 0.5px; 
+        }
+        .out { 
+            margin: 0 0 10px 0;
+            font-size: 0.95rem; 
+            text-transform: uppercase; 
+            color:var(--danger); 
+            letter-spacing: 0.5px; 
+        }
+        .bal { 
+            margin: 0 0 10px 0; 
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            color:var(--bal); 
+            letter-spacing: 0.5px; 
+        }
         .card p { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text); }
         #totalIn { color: var(--success); }
         #totalOut { color: var(--danger); }
@@ -314,15 +358,16 @@
         .table-wrapper { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th {
-          background: rgba(0,0,0,0.02); 
-          padding: 18px; color: #64748b;
-          text-transform: uppercase;
-          font-size: 0.8rem;
-          color:var(--text);
-          font-weight : 700;
-          letter-spacing: 0.5px;
-          border-bottom: 2px solid var(--border);
-          text-align: center;}
+            background: rgba(0,0,0,0.02); 
+            padding: 18px; 
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            color:var(--text);
+            font-weight : 700;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+            text-align: center;
+        }
         td { padding: 18px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.95rem; }
         tr:hover td { background: rgba(0,0,0,0.01); }
 
@@ -338,9 +383,9 @@
         .action-row-btn { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 6px; border-radius: 6px; transition: background 0.2s; }
         .action-row-btn:hover { background: var(--bg); }
 
-        /* Responsive Breakpoints Rules */
+        /* Responsive Breakpoints Rules - Height Fixed to 100vh */
         @media (max-width: 1024px) {
-            .sidebar { transform: translateX(-260px); height: 50%; }
+            .sidebar { transform: translateX(-260px); height: 100vh; }
             .sidebar.active { transform: translateX(0); }
             .main { margin-left: 0; width: 100%; padding: 20px; }
             .burger-menu { display: block !important; }
@@ -399,9 +444,9 @@
         </div>
 
         <div class="stats-grid">
-            <div class="card"><h3 class="in">ኣታዊ</h3><p id="totalIn">0.00</p></div>
-            <div class="card"><h3 class="out">ወፃኢ</h3><p id="totalOut">0.00</p></div>
-            <div class="card"><h3 class="bal">ቀራዪ</h3><p id="netBalance">0.00</p></div>
+            <div class="card"><h3 class="in">ኣታዊ</h3><p id="totalIn">£ 0.00</p></div>
+            <div class="card"><h3 class="out">ወፃኢ</h3><p id="totalOut">£ 0.00</p></div>
+            <div class="card"><h3 class="bal">ቀራዪ</h3><p id="netBalance">£ 0.00</p></div>
         </div>
 
         <div class="time-filter-strip">
@@ -650,6 +695,7 @@
         }
 
         buildCalculatorTable();
+        calculateAndSaveBudgetTotal();
         fetchCloudData();
     }
 
@@ -691,7 +737,6 @@
             `;
             tbody.appendChild(tr);
         });
-        updateTotalsOnly();
     }
 
     function calculateAndSaveBudgetTotal() {
@@ -703,8 +748,8 @@
             const headcountInput = document.getElementById(`calcHead-${index}`);
             const rateInput = document.getElementById(`calcRate-${index}`);
             
-            let count = headcountInput ? parseInt(headcountInput.value) || 0 : 0;
-            let rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
+            let count = headcountInput ? parseInt(headcountInput.value) || 0 : row.count;
+            let rate = rateInput ? parseFloat(rateInput.value) || 0 : row.rate;
             
             let rowTotal = count * rate;
             grandTotalHeadcount += count;
@@ -723,34 +768,10 @@
         saveCalculatorDataForSelectedDate(currentRows);
     }
 
-    function updateTotalsOnly() {
-        let grandTotalBudget = 0;
-        let grandTotalHeadcount = 0;
-
-        calcBaselineDef.forEach((row, index) => {
-            const headcountInput = document.getElementById(`calcHead-${index}`);
-            const rateInput = document.getElementById(`calcRate-${index}`);
-            
-            let count = headcountInput ? parseInt(headcountInput.value) || 0 : 0;
-            let rate = rateInput ? parseFloat(rateInput.value) || 0 : 0;
-            
-            let rowTotal = count * rate;
-            grandTotalHeadcount += count;
-            grandTotalBudget += rowTotal;
-
-            const rowTotalCell = document.getElementById(`calcRowTotal-${index}`);
-            if (rowTotalCell) {
-                rowTotalCell.innerText = `£ ${rowTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            }
-        });
-
-        document.getElementById('calcTotalHeadcount').innerText = grandTotalHeadcount;
-        document.getElementById('calcGrandTotalBox').innerText = `ድምር (Total Budget): £ ${grandTotalBudget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-    }
-
     function onCalculatorDateChange() {
         updateCalculatorTitle();
         buildCalculatorTable();
+        calculateAndSaveBudgetTotal();
     }
 
     function updateCalculatorTitle() {
@@ -765,6 +786,7 @@
         
         updateCalculatorTitle();
         buildCalculatorTable();
+        calculateAndSaveBudgetTotal();
         
         document.getElementById('ledgerWorkspace').style.display = "none";
         document.getElementById('calculatorWorkspace').style.display = "block";
@@ -896,9 +918,9 @@
                 <td><strong>${item.date}</strong></td>
                 <td>${item.group}</td>
                 <td><span class="badge ${item.type == 'in' ? 'badge-in' : 'badge-out'}">${item.category || '-'}</span></td>
-                <td style="color:var(--success); font-weight:600;">${item.type == 'in' ? item.amount.toFixed(2) : '-'}</td>
-                <td style="color:var(--danger); font-weight:600;">${item.type == 'out' ? item.amount.toFixed(2) : '-'}</td>
-                <td style="color:var(--bal); font-weight:600;">${runningBalance.toFixed(2)}</td>
+                <td style="color:var(--success); font-weight:600;">${item.type == 'in' ? "£ " + item.amount.toFixed(2) : '-'}</td>
+                <td style="color:var(--danger); font-weight:600;">${item.type == 'out' ? "£ " + item.amount.toFixed(2) : '-'}</td>
+                <td style="color:var(--bal); font-weight:600;">£ ${runningBalance.toFixed(2)}</td>
                 <td>
                     <button class="action-row-btn" onclick="editEntry(${item.id})">✏️</button> 
                     <button class="action-row-btn" onclick="del(${item.id})">🗑️</button>
@@ -907,9 +929,9 @@
             tbody.appendChild(tr);
         });
         
-        document.getElementById('totalIn').innerText = inTotal.toFixed(2);
-        document.getElementById('totalOut').innerText = outTotal.toFixed(2);
-        document.getElementById('netBalance').innerText = (inTotal - outTotal).toFixed(2);
+        document.getElementById('totalIn').innerText = "£ " + inTotal.toFixed(2);
+        document.getElementById('totalOut').innerText = "£ " + outTotal.toFixed(2);
+        document.getElementById('netBalance').innerText = "£ " + (inTotal - outTotal).toFixed(2);
     }
 
     function editEntry(id) { 
