@@ -50,16 +50,16 @@
         }
         
         .input-form {
-    position: sticky;
-    top: 215px;
-    z-index: 998;
-    background: var(--card); /* Form needs card bg to hide scrolling text */
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    margin-bottom: 25px;
-    border: 1px solid var(--border);
-}
+            position: sticky;
+            top: 215px;
+            z-index: 998;
+            background: var(--card); /* Form needs card bg to hide scrolling text */
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+        }
         body.dark-mode { 
             --primary:#567; 
             --accent: #38bdf8; 
@@ -390,6 +390,7 @@
             .main { margin-left: 0; width: 100%; padding: 20px; }
             .burger-menu { display: block !important; }
         }
+        
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; gap: 15px; }
             .table-wrapper { width: 100%; display: block; overflow-x: auto; }
@@ -398,7 +399,17 @@
             .top-bar h2 { grid-column: 2; font-size: 1.5rem; }
             .action-btns { grid-column: 1 / span 2; margin-left: 0; width: 100%; grid-template-columns: repeat(3, 1fr); }
             .action-btns .btn:first-child { grid-column: span 1; }
+            
+            /* Disable sticky positioning on mobile so the table is visible */
+            .top-bar,
+            .stats-grid,
+            .input-form {
+                position: relative !important;
+                top: auto !important;
+                z-index: 1; 
+            }
         }
+        
         @media (max-width: 480px) {
             .action-btns { grid-template-columns: repeat(2, 1fr); }
         }
@@ -478,6 +489,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>ታ.ቁ</th>
                         <th>ዕለት</th>
                         <th>ኣሃዱ</th>
                         <th>ዓይነት/ምኽንያት</th>
@@ -545,7 +557,7 @@
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5D78EQm4XMafyVuUSLKgE_KpvAnykL91EtGOvIaQLe6Rqr5li_bZ4g_q5cWREXYCNUA/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxGfVfhSsiPAoNDu8UBakX_u8dU6shN02PPdLd3Zk3uQ4G94jhVToPx7qI9tdovoCOqjQ/exec";
 
     let data = [];
     let entryType = 'in';
@@ -904,30 +916,30 @@
         let inTotal = 0, outTotal = 0;
         let runningBalance = 0;
 
-        filtered.forEach(item => {
-            if(item.type === 'in') {
-                inTotal += item.amount;
-                runningBalance += item.amount;
-            } else {
-                outTotal += item.amount;
-                runningBalance -= item.amount;
-            }
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${item.date}</strong></td>
-                <td>${item.group}</td>
-                <td><span class="badge ${item.type == 'in' ? 'badge-in' : 'badge-out'}">${item.category || '-'}</span></td>
-                <td style="color:var(--success); font-weight:600;">${item.type == 'in' ? "£ " + item.amount.toFixed(2) : '-'}</td>
-                <td style="color:var(--danger); font-weight:600;">${item.type == 'out' ? "£ " + item.amount.toFixed(2) : '-'}</td>
-                <td style="color:var(--bal); font-weight:600;">£ ${runningBalance.toFixed(2)}</td>
-                <td>
-                    <button class="action-row-btn" onclick="editEntry(${item.id})">✏️</button> 
-                    <button class="action-row-btn" onclick="del(${item.id})">🗑️</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+           filtered.forEach((item, index) => { 
+        if(item.type === 'in') {
+            inTotal += item.amount;
+            runningBalance += item.amount;
+        } else {
+            outTotal += item.amount;
+            runningBalance -= item.amount;
+        }
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${index + 1}</td> <td><strong>${item.date}</strong></td>
+            <td>${item.group}</td>
+            <td><span class="badge ${item.type == 'in' ? 'badge-in' : 'badge-out'}">${item.category || '-'}</span></td>
+            <td style="color:var(--success); font-weight:600;">${item.type == 'in' ? "£ " + item.amount.toFixed(2) : '-'}</td>
+            <td style="color:var(--danger); font-weight:600;">${item.type == 'out' ? "£ " + item.amount.toFixed(2) : '-'}</td>
+            <td style="color:var(--bal); font-weight:600;">£ ${runningBalance.toFixed(2)}</td>
+            <td>
+                <button class="action-row-btn" onclick="editEntry(${item.id})">✏️</button> 
+                <button class="action-row-btn" onclick="del(${item.id})">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
         
         document.getElementById('totalIn').innerText = "£ " + inTotal.toFixed(2);
         document.getElementById('totalOut').innerText = "£ " + outTotal.toFixed(2);
@@ -958,26 +970,29 @@
         document.getElementById('addBtn').innerText = "ኣመሓይሽ"; 
     }
 
-    function del(id) { 
-        showModal("ክትስርዞ ትደሊ ዲኻ?", async () => { 
+    function del(id) {
+        showModal("ክትስርዞ ትደሊ ዲኻ?", async () => {
             showSpinner(true);
-            data = data.filter(item => item.id != id);
-            render();
-
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
-                    mode: "no-cors",
+                    mode: "no-cors", 
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ action: 'DELETE', id: id })
+                    body: JSON.stringify({ 
+                        action: 'DELETE', 
+                        id: id,
+                        secretToken: 'maebel@311'
+                    })
                 });
+                data = data.filter(item => item.id != id);
+                render();
                 setTimeout(fetchCloudData, 2000);
             } catch (err) {
                 showModal("ስራሕ ምስራዝ ኣይተዓወተን።");
             } finally {
                 showSpinner(false);
             }
-        }); 
+        });
     }
 
     function exportExcel() { 
@@ -1000,9 +1015,13 @@
                         method: "POST",
                         mode: "no-cors",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: 'CLEAR_ALL' })
+                        body: JSON.stringify({ 
+                            action: 'CLEAR_ALL',
+                            secretToken: 'maebel@311' 
+                        })
                     });
                     showModal("ኹሉ ተደምሲሱ ኣሎ።");
+                    setTimeout(fetchCloudData, 2000);
                 } catch(e) {
                     showModal("ጌጋ ተፈጢሩ።");
                 } finally {
