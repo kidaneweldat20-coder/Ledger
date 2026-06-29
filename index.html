@@ -82,7 +82,7 @@
         }
 
         /* Sidebar Styling - Height Fixed to 100vh */
-        .sidebar { 
+          .sidebar { 
             position: fixed; 
             left: 0; 
             top: 0; 
@@ -93,10 +93,17 @@
             box-shadow: 4px 0 20px rgba(0,0,0,0.08); 
             transition: transform 0.3s ease; 
             border-radius: 0px 20px 20px 0px;
-            overflow-y: auto;
+            display: flex; /* Added */
+            flex-direction: column; /* Added */
+            overflow: hidden; /* Changed from auto */
             color:var(--col);
             font-weight: 700;
         }
+        .sidebar-content {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
         .sidebar-header {
             padding: 24px 20px; 
             font-weight: 700; 
@@ -130,7 +137,7 @@
             background: rgba(255,255,255,0.15);
             margin: 10px 0;
         }
-
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .burger-menu { 
             display: none; 
             cursor: pointer; 
@@ -175,34 +182,71 @@
         }
         @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
-        /* Modal Box Customization */
-        #customModal { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.4); 
-            backdrop-filter: blur(4px);
-            z-index: 3000; 
-            align-items: center; 
-            justify-content: center; 
-            animation: fadeIn 0.2s ease;
+        /* Modal Container */
+        #customModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
         }
-        .modal-content { 
-            background: var(--card); 
-            padding: 30px; 
-            border-radius: 16px; 
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
-            width: 90%; 
-            max-width: 420px; 
-            text-align: center; 
-            color: var(--text); 
-            transform: scale(0.95);
-            animation: slideUp 0.2s forwards ease;
+
+        /* Modal Box */
+        .modal-content {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid var(--border);
         }
-        .modal-btns { display: flex; gap: 12px; justify-content: center; margin-top: 25px; }
+
+        /* Modal Message Text */
+        .modal-content p {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        /* Button Container */
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* Individual Modal Buttons */
+        .btn-modal {
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            color: white;
+        }
+        .main {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 40px;
+        }
+
+        /* Global Button Styling */
+        .btn {
+            padding: 12px 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+        }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { to { transform: scale(1); } }
@@ -263,6 +307,28 @@
 
         .action-row-btn { background: transparent; border: none; cursor: pointer; font-size: 1.1rem; padding: 6px; border-radius: 6px; transition: background 0.2s; }
         .action-row-btn:hover { background: var(--bg); }
+      /* Custom Password Field Styling */
+        #modalPassword {
+            display: none; /* Hidden by default */
+            width: 85%;
+            margin: 20px auto 0 auto;
+            padding: 12px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 6px; /* Spaces out the password dots */
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            transition: border 0.3s ease;
+        }
+
+        #modalPassword:focus {
+            border-color: var(--danger);
+        }
+
 
         @media (max-width: 1024px) {
             .sidebar { transform: translateX(-260px); height: 100vh; }
@@ -302,14 +368,40 @@
         }
     </style>
 </head>
-<body>
 
-<div id="loadingSpinner">⏳ ምስ መረዳእታ ዓንቀጽ ይራኸብ ኣሎ...</div>
+<body>
+<div id="loginOverlay" style="position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+    <div class="modal-content">
+        <h3>Admin Login</h3>
+        <input type="text" id="loginUser" placeholder="Username" style="width:100%; margin-bottom:10px; padding:10px; border-radius:10px;">
+        <input type="password" id="loginPass" placeholder="Password" style="width:100%; margin-bottom:10px; padding:10px; border-radius:10px;">
+        <button class="btn" style="background:var(--accent); width:100%;" onclick="attemptLogin()">Login</button>
+        
+        <p style="margin-top:15px; font-size: 0.85rem;">
+            <a href="#" onclick="triggerRecovery()" style="color:var(--accent); text-decoration: none; font-weight: bold;">መሕለፊ ቃል ረሲዖም? (Forgot Password?)</a>
+        </p>
+    </div>
+</div>
+
+
+<div id="customModal">
+    <div class="modal-content">
+        <p id="modalMsg" style="font-weight: 600; font-size: 1.1rem; margin: 0;"></p>
+        <input type="password" id="modalPassword" placeholder="መሕለፊ ቃል (Password)" autocomplete="new-password">
+        <div class="modal-btns" id="modalBtns"></div>
+    </div>
+</div>
 
 <div class="sidebar" id="sidebar">
     <div class="sidebar-header">ዝርዝር</div>
+    <div class="sidebar-content" id="sidebarNav"></div>
+    <div class="sidebar-footer">
+        <button class="btn" style="background:#64748b; width:100%; margin-bottom:10px;" onclick="changePasswordUI()">🔑 መሕለፊ ቃል ቀይር</button>
+        <button class="btn" style="background:#e11d48; width:100%;" onclick="manualLogout()">🚪 ካብ መዝገብ ውጻእ</button>
+    </div>
 </div>
 
+<div id="loadingSpinner">⏳ ምስ መረዳእታ ዓንቀጽ ይራኸብ ኣሎ...</div>
 <div class="main">
     <div class="top-bar">
         <div class="burger-menu" onclick="event.stopPropagation(); document.getElementById('sidebar').classList.add('active')">☰</div>
@@ -423,16 +515,9 @@
     </div>
 </div>
 
-<div id="customModal">
-    <div class="modal-content">
-        <p id="modalMsg" style="font-weight: 600; font-size: 1.1rem; margin: 0;"></p>
-        <div class="modal-btns" id="modalBtns"></div>
-    </div>
-</div>
-
 <script>
     // እዚህ ጋር የራስህን የፕብሊሽድ Apps Script URL ተካ
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvMk812cn0UneVZPYcyFwfCvCv_gNpSbjZq3z_NZc2qMLYQEy42itlrn4N0kXW-HaXFw/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSJGngONbd2MhuvJTD5aekTSIGsIe4_YJVCfPuGXM4EGqbRJg2-L5520MGbpFxawsr/exec";
 
     let data = [];
     let entryType = 'in';
@@ -563,19 +648,35 @@
         adjustDays();
         document.getElementById('day').value = currentEthDate.day;
 
+      
+         // Inside initApp()
         const sidebar = document.getElementById('sidebar');
-        sidebar.innerHTML = '<div class="sidebar-header">ዝርዝር</div>';
-        sidebar.innerHTML += `<div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>`;
         
+        // Update this block to include the manualLogout button
+        sidebar.innerHTML = `
+            <div class="sidebar-header">ዝርዝር</div>
+            <div class="sidebar-content" id="sidebarNav">
+                <div class="nav-item active-nav" onclick="filterGroup('ጠቕላላ መዝገብ', this)">ጠቕላላ (All)</div>
+            </div>
+            <div class="sidebar-footer" style="padding: 20px;">
+                <button class="btn" style="background:#64748b; width:100%; margin-bottom:10px;" onclick="changePasswordUI()">🔑 መሕለፊ ቃል ቀይር</button>
+                <button class="btn" style="background:#e11d48; width:100%;" onclick="manualLogout()">🚪 ካብ መዝገብ ውጻእ</button>
+            </div>
+        `;   
+        const navContainer = document.getElementById('sidebarNav');
         const groupSelect = document.getElementById('groupSelect');
         groupSelect.innerHTML = '';
+        
         groups.forEach(g => {
             groupSelect.innerHTML += `<option value="${g}">${g}</option>`;
-            sidebar.innerHTML += `<div class="nav-item" onclick="filterGroup('${g}', this)">${g}</div>`;
+            navContainer.innerHTML += `<div class="nav-item" onclick="filterGroup('${g}', this)">${g}</div>`;
         });
 
-        sidebar.innerHTML += `<div class="nav-divider"></div>`;
-        sidebar.innerHTML += `<div class="nav-item" id="navCalcBtn" onclick="openCalculatorView(this)" style="color: #58efa6; font-weight: bold;">📊 ድልድል ሓ/ሰብ</div>`;
+        navContainer.innerHTML += `
+            <div class="nav-divider"></div>
+            <div class="nav-item" id="navCalcBtn" onclick="openCalculatorView(this)" style="color: #58efa6; font-weight: bold;">📊 ድልድል ሓ/ሰብ</div>
+        `;
+
 
         if (localStorage.getItem('darkMode') === 'enabled') {
             document.body.classList.add('dark-mode');
@@ -583,7 +684,11 @@
 
         buildCalculatorTable();
         calculateAndSaveBudgetTotal();
-        fetchCloudData();
+        
+        // Only fetch cloud data initially if already logged in
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            fetchCloudData();
+        }
     }
 
     function getCalculatorDataForSelectedDate() {
@@ -682,25 +787,29 @@
         document.getElementById('sidebar').classList.remove('active');
     }
 
-    function showModal(msg, onConfirm) {
+    function showModal(msg, onConfirm, requirePassword = false) {
         const modal = document.getElementById('customModal');
+        const passInput = document.getElementById('modalPassword');
         document.getElementById('modalMsg').innerText = msg;
         const btnContainer = document.getElementById('modalBtns');
         btnContainer.innerHTML = '';
         
+        passInput.style.display = requirePassword ? 'block' : 'none';
+        
+        const createBtn = (text, bg, onClick) => {
+            const b = document.createElement('button');
+            b.innerText = text; b.className = 'btn-modal'; b.style.background = bg;
+            b.onclick = onClick; return b;
+        };
+
         if (onConfirm) {
-            const noBtn = document.createElement('button'); noBtn.innerText = "አይ"; noBtn.className = "btn"; noBtn.style.background = "#94a3b8";
-            noBtn.onclick = () => modal.style.display = 'none';
-            
-            const yesBtn = document.createElement('button'); yesBtn.innerText = "እወ"; yesBtn.className = "btn"; yesBtn.style.background = "#dc2626";
-            yesBtn.onclick = () => { onConfirm(); modal.style.display = 'none'; };
-            
-            btnContainer.appendChild(noBtn); 
-            btnContainer.appendChild(yesBtn);
+            btnContainer.appendChild(createBtn("አይ", "#94a3b8", () => modal.style.display = 'none'));
+            btnContainer.appendChild(createBtn("እወ", "#dc2626", () => {
+                modal.style.display = 'none';
+                onConfirm(requirePassword ? passInput.value : null);
+            }));
         } else {
-            const okBtn = document.createElement('button'); okBtn.innerText = "እሺ"; okBtn.className = "btn"; okBtn.style.background = "#3498db";
-            okBtn.onclick = () => modal.style.display = 'none';
-            btnContainer.appendChild(okBtn);
+            btnContainer.appendChild(createBtn("እሺ", "#3498db", () => modal.style.display = 'none'));
         }
         modal.style.display = 'flex';
     }
@@ -765,9 +874,11 @@
     }
 
     function del(id) {
-        showModal("ክትስርዞ ትደሊ ዲኻ?", async () => {
-            const password = prompt("በጃኹም መሕለፊ ቃል (Password) የእትዉ:");
-            if (!password) return;
+        showModal("ክትስርዞ ትደሊ ዲኻ? መሕለፊ ቃል የእትዉ:", async (password) => {
+            if (!password) {
+                showModal("መሕለፊ ቃል ኣየእቶኹምን!");
+                return;
+            }
 
             showSpinner(true);
             try {
@@ -777,6 +888,7 @@
                     body: JSON.stringify({ 
                         action: 'DELETE', 
                         id: id,
+                      username: localStorage.getItem('adminUser'),
                         secretToken: password
                     })
                 });
@@ -785,22 +897,26 @@
                 if (result.status === "success") {
                     data = data.filter(item => item.id != id);
                     render();
+                    showModal("✅ መዝገብ ብትኽክል ተሰሪዙ ኣሎ!");
                 } else {
-                    showModal("ጌጋ: " + (result.message || "ስራሕ ምስራዝ ኣይተዓወተን።"));
+                    showModal("ጌጋ: " + (result.message || "ትኽክለኛ መሕለፊ ቃል ኣይኮነን።"));
                 }
             } catch (err) {
                 showModal("ስራሕ ምስራዝ ኣይተዓወተን።");
             } finally {
                 showSpinner(false);
             }
-        });
+        }, true);
     }
 
     function clearAll() { 
         showModal("🛑 ኣስተውዕል! እዚ ንኹሉ ናይ Google Sheet መዛግብቲ ክድምስስ እዩ። ርግጸኛ ዲኻ?", () => { 
-            showModal("ንመወዳእታ ግዜ፦ ርግጸኛ ዲኻ?", async () => {
-                const password = prompt("ናይ ምድምሳስ ፍቓድ ንምርግጋጽ መሕለፊ ቃል የእትዉ:");
-                if (!password) return;
+            showModal("ንመወዳእታ ግዜ፦ ናይ ምድምሳስ ፍቓድ ንምርግጋጽ መሕለፊ ቃል የእትዉ:", async (password) => {
+                
+                if (!password || password.trim() === "") {
+                    showModal("መሕለፊ ቃል ኣየእቶኹምን!");
+                    return;
+                }
 
                 showSpinner(true);
                 try {
@@ -809,7 +925,8 @@
                         headers: { "Content-Type": "text/plain;charset=utf-8" },
                         body: JSON.stringify({ 
                             action: 'CLEAR_ALL',
-                            secretToken: password 
+                           username: localStorage.getItem('adminUser'),
+                          secretToken: password 
                         })
                     });
                     
@@ -817,7 +934,7 @@
                     if (result.status === "success") {
                         data = [];
                         render();
-                        showModal("ኹሉ ተደምሲሱ ኣሎ።");
+                        showModal("✅ ኹሉ መዝገብ ብትኽክል ተደምሲሱ ኣሎ።");
                     } else {
                         showModal("ጌጋ: " + (result.message || "ክድምሰስ ኣይተኻእለን።"));
                     }
@@ -826,7 +943,7 @@
                 } finally {
                     showSpinner(false);
                 }
-            });
+            }, true); 
         }); 
     }
 
@@ -893,29 +1010,65 @@
         document.getElementById('netBalance').innerText = "£ " + (inTotal - outTotal).toFixed(2);
     }
 
-    function editEntry(id) { 
-        const item = data.find(i => i.id == id); 
-        if(!item) return;
-        editId = id; 
-        
-        document.getElementById('categorySelect').value = item.category;
-        document.getElementById('groupSelect').value = item.group; 
-        document.getElementById('amount').value = item.amount; 
-        
-        const dateParts = item.date.split('-');
-        if(dateParts.length === 3) {
-            document.getElementById('year').value = dateParts[0];
-            document.getElementById('month').value = dateParts[1].padStart(2, '0');
-            adjustDays();
-            document.getElementById('day').value = dateParts[2].padStart(2, '0');
+    function editEntry(id) {
+    const item = data.find(i => i.id == id);
+    if (!item) return;
+
+    // Open Modal asking for Password first
+    showModal("ናይ ምቕያር ፍቓድ ንምርካብ መሕለፊ ቃል የእትዉ:", async (password) => {
+        if (!password) {
+            showModal("መሕለፊ ቃል ኣየእቶኹምን!");
+            return;
         }
-        
-        entryType = item.type; 
-        const typeBtn = document.getElementById('typeBtn');
-        typeBtn.innerText = entryType === 'in' ? 'ኣታዊ' : 'ወፃኢ'; 
-        typeBtn.style.background = entryType === 'in' ? '#16a34a' : '#dc2626';
-        document.getElementById('addBtn').innerText = "ኣመሓይሽ"; 
-    }
+
+        // --- Verify password before allowing edit ---
+        // We reuse the existing login check logic or a new server check
+        // For security, we verify the password against the backend
+        showSpinner(true);
+        try {
+            const res = await fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ 
+                    action: 'LOGIN', // Reuse login logic to verify password
+                    username: localStorage.getItem('adminUser'), 
+                    password: password 
+                })
+            });
+            const result = await res.json();
+
+            if (result.status === "success") {
+                // Password is correct, proceed with original edit logic
+                editId = id;
+                document.getElementById('categorySelect').value = item.category;
+                document.getElementById('groupSelect').value = item.group;
+                document.getElementById('amount').value = item.amount;
+
+                const dateParts = item.date.split('-');
+                if (dateParts.length === 3) {
+                    document.getElementById('year').value = dateParts[0];
+                    document.getElementById('month').value = dateParts[1].padStart(2, '0');
+                    adjustDays();
+                    document.getElementById('day').value = dateParts[2].padStart(2, '0');
+                }
+
+                entryType = item.type;
+                const typeBtn = document.getElementById('typeBtn');
+                typeBtn.innerText = entryType === 'in' ? 'ኣታዊ' : 'ወፃኢ';
+                typeBtn.style.background = entryType === 'in' ? '#16a34a' : '#dc2626';
+                document.getElementById('addBtn').innerText = "ኣመሓይሽ";
+                
+                // Optional: Scroll to the input form
+                document.querySelector('.input-form').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                showModal("ጌጋ: ትኽክለኛ መሕለፊ ቃል ኣይኮነን።");
+            }
+        } catch (err) {
+            showModal("ምውራድ ፈሺሉ ኣሎ።");
+        } finally {
+            showSpinner(false);
+        }
+    }, true); // The 'true' argument tells showModal to show the password box
+}
 
     function exportExcel() { 
         if(data.length === 0) { showModal("ዝወፅእ መዝገብ የለን።"); return; }
@@ -966,7 +1119,148 @@
         }
     });
 
-    window.onload = initApp;
+        async function attemptLogin() {
+        const u = document.getElementById('loginUser').value;
+        const p = document.getElementById('loginPass').value;
+        
+        const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: 'LOGIN', username: u, password: p })
+        });
+        const result = await res.json();
+        
+        if (result.status === "success") {
+            document.getElementById('loginOverlay').style.display = 'none';
+            localStorage.setItem('adminUser', u);
+            localStorage.setItem('isLoggedIn', 'true');
+            initSessionManager();
+            fetchCloudData(); // Load data after login
+        } else {
+            // Replace the native alert() with your styled custom modal
+            showModal("Login Failed: " + result.message);
+        }
+    }
+
+    // --- Session & Inactivity Logic ---
+    let idleTimeout;
+    const IDLE_LIMIT = 30 * 60 * 1000; // 30 Minutes
+
+    function resetIdleTimer() {
+        clearTimeout(idleTimeout);
+        idleTimeout = setTimeout(logoutUser, IDLE_LIMIT);
+    }
+
+    function initSessionManager() {
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            ['mousemove', 'keydown', 'scroll', 'click'].forEach(evt => 
+                window.addEventListener(evt, resetIdleTimer, false)
+            );
+            resetIdleTimer();
+        }
+    }
+function triggerRecovery() {
+    // Clear the password field before showing the modal
+    document.getElementById('modalPassword').value = '';
+    
+    // Use your existing custom modal instead of prompt()
+    showModal("Enter Master Recovery Code:", (code) => {
+        if (!code) {
+            showModal("Code is required!");
+            return;
+        }
+        
+        showSpinner(true); 
+        
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ 
+                action: 'RECOVER_PASSWORD', 
+                recoveryCode: code 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            showSpinner(false);
+            // Replace alerts with your custom modal
+            if (data.status === 'success') {
+                showModal("✅ Success: " + data.message);
+            } else {
+                showModal("❌ Error: " + data.message);
+            }
+        })
+        .catch(err => {
+            showSpinner(false);
+            showModal("Network error. Please try again.");
+        });
+    }, true); // The 'true' argument tells showModal to show the input field
+}
+
+    function logoutUser() {
+        localStorage.clear();
+        showModal("ናይ ስራሕ ግዜኹም ተወዲኡ እዩ። ብኽብረትኩም እንደገና ይእተዉ።", () => {
+            window.location.reload();
+        });
+    }
+
+    function manualLogout() {
+        showModal("ካብ መዝገብ ንምውጻእ (Logout) ርግጸኛ ዲኻ?", () => {
+            localStorage.clear();
+            window.location.reload();
+        }, false);
+    }
+
+        function changePasswordUI() {
+        // Clear the input field before starting
+        document.getElementById('modalPassword').value = '';
+        
+        // Step 1: Ask for the old password
+        showModal("ናይ ቀደም መሕለፊ ቃል የእትዉ (Old Password):", (oldP) => {
+            if (!oldP) {
+                showModal("መሕለፊ ቃል ኣየእቶኹምን!");
+                return;
+            }
+
+            // Step 2: Clear the input field again and ask for the new password
+            document.getElementById('modalPassword').value = '';
+            
+            showModal("ሓድሽ መሕለፊ ቃል የእትዉ (New Password):", (newP) => {
+                if (!newP) {
+                    showModal("ሓድሽ መሕለፊ ቃል ኣየእቶኹምን!");
+                    return;
+                }
+
+                const user = localStorage.getItem('adminUser');
+                showSpinner(true);
+
+                // Step 3: Send both to the server
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ action: 'CHANGE_PWD', username: user, oldPassword: oldP, newPassword: newP })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    showSpinner(false);
+                    showModal(result.message); // Show success or error in the custom modal
+                })
+                .catch(err => {
+                    showSpinner(false);
+                    showModal("ጌጋ ተፈጢሩ ኣሎ። በጃኹም ደጊምኩም ፈትኑ። (Network Error)");
+                });
+
+            }, true); // 'true' shows the password input for Step 2
+        }, true); // 'true' shows the password input for Step 1
+    }
+    window.onload = () => {
+        // 1. Check Login Status first
+        if (localStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('adminUser')) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            initSessionManager();
+        }
+        
+        // 2. Initialize the rest of the application
+        initApp();
+    };
 </script>
 </body>
 </html>
